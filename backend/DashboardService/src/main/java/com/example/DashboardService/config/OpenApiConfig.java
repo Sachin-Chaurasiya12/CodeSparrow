@@ -1,4 +1,4 @@
-package com.CodeSparrow.AuthService.config;
+package com.example.DashboardService.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -13,12 +13,12 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("CodeSparrow Auth Service API")
+                        .title("CodeSparrow Dashboard Service API")
                         .version("1.0")
-                        .description("Authentication microservice for CodeSparrow application")
+                        .description("Dashboard microservice for CodeSparrow application")
                         .contact(new Contact()
                                 .name("CodeSparrow Team")
-                                .email("support@CodeSparrow.com")
+                                .email("support@codesparrow.com")
                         )
                 );
     }
