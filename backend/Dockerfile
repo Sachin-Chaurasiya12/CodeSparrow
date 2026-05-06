@@ -1,7 +1,13 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+
+WORKDIR /app
+COPY AuthService /app
+
+RUN mvn clean package -DskipTests
+
 FROM openjdk:21
 
 WORKDIR /app
-
-COPY AuthService/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 CMD ["java", "-jar", "app.jar"]

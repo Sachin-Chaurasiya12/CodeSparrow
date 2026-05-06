@@ -13,62 +13,56 @@ function Login() {
 
   const showAlert = (msg, type) => {
     setAlert({ message: msg, type });
-
     setTimeout(() => {
       setAlert({ message: "", type: "" });
     }, 3000);
   };
+
   const navigate = useNavigate();
+
   const handleLogin = async () => {
-  let newErrors = {};
+    let newErrors = {};
 
-  if (!email) newErrors.email = "Email is required";
-  if (!password) newErrors.password = "Password is required";
+    if (!email) newErrors.email = "Email is required";
+    if (!password) newErrors.password = "Password is required";
 
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    showAlert("Please fix the errors below", "error");
-    return;
-  }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showAlert("Please fix the errors below", "error");
+      return;
+    }
 
-  setErrors({});
-  setLoading(true);
+    setErrors({});
+    setLoading(true);
 
-  try{
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: {
-          "Content-Type": "application/json"
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    },
-    body: JSON.stringify({ email, password })
+      if (!res.ok) throw new Error("Login failed");
 
-  })
-  if(!res.ok){
-      throw new Error("Login failed");
-  }
+      const data = await res.json();
 
-  const data = await res.json();
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
 
-  localStorage.setItem("accessToken",data.accessToken);
-  localStorage.setItem("refreshToken",data.refreshToken);
+      showAlert(data.message || "Login successful", "success");
+      navigate("/dashboard");
+    } catch (err) {
+      showAlert("Invalid email or password", "error");
+      setErrors({ email: "Check email", password: "Check password" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  showAlert(data.message || "Login successful", "success");
-
-  navigate("/dashboard");
-}catch(err){
-  showAlert("Invalid email or password","error");
-
-  setErrors({
-      email: "Check email",
-      password: "Check password",
-    });
-}finally{
-  setLoading(false);
-}
-
-};
-
+  // ✅ Enter key handler
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleLogin();
+  };
 
   return (
     <>
@@ -221,18 +215,14 @@ function Login() {
 
       <div className="auth-wrapper">
         <div className="auth-card">
-
           <div className="left">
             <div className="brand">Velora</div>
 
             <h2>Welcome Back!</h2>
-            <div className="sub">Let’s get you signed in securely.</div>
+            <div className="sub">Let's get you signed in securely.</div>
 
-            {/* ALERT */}
             {alert.message && (
-              <div className={`alert ${alert.type}`}>
-                {alert.message}
-              </div>
+              <div className={`alert ${alert.type}`}>{alert.message}</div>
             )}
 
             {/* EMAIL */}
@@ -244,6 +234,7 @@ function Login() {
                 setEmail(e.target.value);
                 setErrors(prev => ({ ...prev, email: "" }));
               }}
+              onKeyDown={handleKeyDown}
               className={errors.email ? "errorInput" : ""}
             />
             {errors.email && <div className="errorText">{errors.email}</div>}
@@ -257,6 +248,7 @@ function Login() {
                 setPassword(e.target.value);
                 setErrors(prev => ({ ...prev, password: "" }));
               }}
+              onKeyDown={handleKeyDown}
               className={errors.password ? "errorInput" : ""}
             />
             {errors.password && <div className="errorText">{errors.password}</div>}
@@ -266,12 +258,11 @@ function Login() {
             </button>
 
             <div className="small">
-              Don’t have an account? <Link to="/register">Sign Up</Link>
+              Don't have an account? <Link to="/register">Sign Up</Link>
             </div>
           </div>
 
           <div className="right"></div>
-
         </div>
       </div>
     </>

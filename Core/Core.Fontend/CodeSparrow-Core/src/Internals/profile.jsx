@@ -1,6 +1,31 @@
-import React from "react";
+// import React from "react";
+import React, { useEffect, useState } from "react";
+
 
 export default function ProfilePage() {
+  const [countries, setCountries] = useState([]);
+
+  useEffect(() => {
+  const fetchCountries = async () => {
+    try {
+      const res = await fetch("https://restcountries.com/v3.1/all?fields=name");
+      const data = await res.json();
+
+      const formatted = data
+        .map((c) => ({
+          name: c.name.common,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+ 
+      setCountries(formatted);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchCountries();
+}, []);
+
   return (
     <>
       <style>{`
@@ -118,7 +143,7 @@ export default function ProfilePage() {
         }
 
         input, select {
-          width: 100%;
+          width: 90%;
           padding: 8px;
           margin-top: 5px;
           border: 1px solid #ddd;
@@ -150,9 +175,8 @@ export default function ProfilePage() {
           <p>Microsoft Inc.</p>
 
           <div className="stats">
-            <div><span>Opportunities applied</span><b>32</b></div>
-            <div><span>Opportunities won</span><b>26</b></div>
-            <div><span>Current opportunities</span><b>6</b></div>
+            <div><span>Code Snippets</span><b>32</b></div>
+            <div><span>Problem Solved</span><b>26</b></div>
           </div>
 
           <button className="outline-btn">View Public Profile</button>
@@ -167,46 +191,50 @@ export default function ProfilePage() {
           <form className="form-grid">
             <div>
               <label>Username</label>
-              <input defaultValue="Nathaniel" />
+              <input type="text" />
             </div>
 
             <div>
               <label>Name</label>
-              <input defaultValue="Poole" />
+              <input type="text" />
             </div>
 
             <div>
               <label>Phone Number</label>
-              <input defaultValue="+1800-000" />
+              <input type="text" />
             </div>
 
             <div>
               <label>Email Address</label>
-              <input defaultValue="nathaniel.poole@microsoft.com" />
+              <input type="email" />
             </div>
 
             <div>
               <label>City</label>
-              <input defaultValue="Bridgeport" />
+              <input type="text" />
             </div>
 
             <div>
-              <label>State/County</label>
-              <input defaultValue="WA" />
+              <label>State</label>
+              <input type="text" />
             </div>
 
             <div>
-              <label>Postcode</label>
-              <input defaultValue="31005" />
+              <label>Bio</label>
+              <input type="text" />
             </div>
 
             <div>
               <label>Country</label>
-              <select defaultValue="USA">
-                <option>USA</option>
-                <option>UK</option>
-                <option>Canada</option>
+              <select>
+                <option value="">Select Country</option>
+                {countries.map((c, index) => (
+                  <option key={index} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
+              
             </div>
           </form>
 
