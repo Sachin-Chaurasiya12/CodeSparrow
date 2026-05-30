@@ -11,14 +11,22 @@ export default function LayoutShell() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleLogout = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+
+  navigate("/", { replace: true }); // login page
+  };
+
   const navItems = [
     { label: "Dashboard", icon: "⚡", section: "Main", path: "/dashboard" },
     { label: "DSA Arena", icon: "⚔️", section: "Main", path: "/arena" },
-    { label: "Code Vault", icon: "📦", section: "Main", path: "/vault" },
-    { label: "Learning Loop", icon: "🔁", section: "Main", path: "/learning" },
+    { label: "Inventory", icon: "📦", section: "Main", path: "/vault" },
+    { label: "XP Vault", icon: "🔁", section: "Main", path: "/learning" },
     { label: "Friends", icon: "👥", section: "Social", path: "/friends" },
     { label: "Progress", icon: "📊", section: "Social", path: "/progress" },
     { label: "Settings", icon: "⚙️", section: "Account", path: "/settings" },
+    { label: "Logout", icon: "🚪", section: "Account", action: "logout" },
   ];
 
   const sections = [...new Set(navItems.map((n) => n.section))];
@@ -117,7 +125,13 @@ export default function LayoutShell() {
                   return (
                     <motion.div
                       key={item.label}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => {
+                        if (item.action === "logout") {
+                          handleLogout();
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
                       whileHover={{
                         scale: 1.03,
                         x: 3,
@@ -128,11 +142,16 @@ export default function LayoutShell() {
                         ...styles.navItem,
                         justifyContent: sidebarOpen ? "flex-start" : "center",
                         background: active ? "#EEEDFE" : "transparent",
-                        color: active ? "#534AB7" : "#5F5E5A",
+                        color:
+                          item.action === "logout"
+                            ? "#dc2626"
+                            : active
+                            ? "#534AB7"
+                            : "#5F5E5A",
                       }}
                     >
                       <span>{item.icon}</span>
-
+                    
                       <AnimatePresence>
                         {sidebarOpen && (
                           <motion.span

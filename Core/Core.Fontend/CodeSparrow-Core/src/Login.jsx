@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import bg from "./assets/loginimage.webp";
@@ -19,6 +19,13 @@ function Login() {
   };
 
   const navigate = useNavigate();
+  useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+
+  if (token) {
+    navigate("/dashboard", { replace: true });
+  }
+}, [navigate]);
 
   const handleLogin = async () => {
     let newErrors = {};
