@@ -30,7 +30,7 @@ into one unified system focused on **learning retention and reuse**.
 
 ## ✨ Features
 
-### 📦 Code Vault
+### 📦 Inventory
 
 * Store reusable code snippets
 * Tag-based organization
@@ -43,11 +43,12 @@ into one unified system focused on **learning retention and reuse**.
 * Track attempts and solutions
 * Learn patterns through structured problems
 
-### 🔄 Learning Loop (Core Feature)
+### 🔄 XP Vault (Core Feature)
 
-* Solve a problem
-* Save the pattern/snippet
+* Buy Study Material
+* Buy Snippets 
 * Reuse it in future problems
+* every thing with your earned points no Money!
 
 ### 👥 Shared Knowledge (Friends Mode)
 
