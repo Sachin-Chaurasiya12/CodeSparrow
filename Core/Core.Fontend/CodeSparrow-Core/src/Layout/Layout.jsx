@@ -20,8 +20,8 @@ export default function LayoutShell() {
 
   const navItems = [
     { label: "Dashboard", icon: "⚡", section: "Main", path: "/dashboard" },
-    { label: "DSA Arena", icon: "⚔️", section: "Main", path: "/arena" },
     { label: "Inventory", icon: "📦", section: "Main", path: "/vault" },
+    { label: "DSA Arena", icon: "⚔️", section: "Main", path: "/arena" },
     { label: "XP Vault", icon: "🔁", section: "Main", path: "/learning" },
     { label: "Friends", icon: "👥", section: "Social", path: "/friends" },
     { label: "Progress", icon: "📊", section: "Social", path: "/progress" },
