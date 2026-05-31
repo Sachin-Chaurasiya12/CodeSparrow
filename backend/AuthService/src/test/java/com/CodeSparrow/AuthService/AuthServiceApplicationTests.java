@@ -1,4 +1,4 @@
-package com.Velora.AuthService;
+package com.CodeSparrow.AuthService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

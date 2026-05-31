@@ -1,50 +1,62 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./Login";
-import Register from "./RegisterPageLayout";
-import Dashboard from "./Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Profile from "./Internals/profile";
-import MainLayout from "./Layout/Layout";
+  import { Routes, Route, Navigate } from "react-router-dom";
+  import Login from "./Login";
+  import Register from "./RegisterPageLayout";
+  import Dashboard from "./Dashboard";
+  import ProtectedRoute from "./components/ProtectedRoute";
+  import Profile from "./Internals/profile";
+  import MainLayout from "./Layout/Layout";
 
-function App() {
-  return (
-    <Routes>
+  
+  function PublicRoute({ children }) {
+  const token = localStorage.getItem("accessToken");
+  if (token) return <Navigate to="/dashboard" replace />;
+  return children;
+  }
+  function App() {
+    return (
+      <Routes>
 
-      {/* public routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+        {/* public routes */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-      {/* protected routes */}
-      <Route/>
-      <Route
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route 
-        path="/internal/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      </Route>
-      {/* default */}
-      <Route path="/" element={<Navigate to="/login" />} />
+        {/* protected routes */}
 
-    </Routes>
-  );
-}
+        <Route
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/internal/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        </Route>
+        {/* default */}
+        <Route
+          path="/"
+          element={
+            localStorage.getItem("accessToken")  // ← was "token", now "accessToken"
+              ? <Navigate to="/dashboard" replace />
+              : <Navigate to="/login" replace />
+          }
+        />
+      </Routes>
+    );
+  }
 
-export default App;
+  export default App;

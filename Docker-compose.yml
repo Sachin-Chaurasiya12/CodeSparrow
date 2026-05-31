@@ -4,6 +4,10 @@ networks:
   codesparrow-net:
     driver: bridge
 
+volumes:
+  auth-target:
+  dashboard-target:
+
 services:
   auth-service:
     build:
@@ -16,6 +20,9 @@ services:
       SERVER_PORT: 8081
     ports:
       - "8081:8081"
+    volumes:
+      - ./backend/AuthService:/app
+      - auth-target:/app/target
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -32,6 +39,9 @@ services:
       SERVER_PORT: 8082
     ports:
       - "8082:8082"
+    volumes:
+      - ./backend/DashboardService:/app
+      - dashboard-target:/app/target
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -43,6 +53,14 @@ services:
       dockerfile: Dockerfile
     container_name: codesparrow-frontend
     restart: unless-stopped
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - HOST=0.0.0.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Core/Core.Fontend/CodeSparrow-Core:/app
+      - /app/node_modules
     networks:
       - codesparrow-net
 
