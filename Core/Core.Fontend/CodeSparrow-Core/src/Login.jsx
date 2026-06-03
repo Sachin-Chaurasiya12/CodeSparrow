@@ -2,6 +2,7 @@ import { useState,useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import bg from "./assets/loginimage.webp";
+import logo from "./assets/brand.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ function Login() {
   if (token) {
     navigate("/dashboard", { replace: true });
   }
-}, [navigate]);
+  }, [navigate]);
 
   const handleLogin = async () => {
     let newErrors = {};
@@ -213,7 +214,20 @@ function Login() {
           background: #dcfce7;
           color: #166534;
         }
-
+        .brand {
+          display: flex;
+          align-items: center;
+          font-weight: 800;
+          font-size: 25px;
+          margin-bottom: 5px;
+          color: #6366f1;
+          text-transform: uppercase;
+        } 
+        .brand-logo {
+          width: 68px;
+          height: 68px;
+          object-fit: contain;
+        }
         @media (max-width: 850px) {
           .right { display: none; }
           .auth-card { max-width: 450px; height: auto; }
@@ -223,7 +237,10 @@ function Login() {
       <div className="auth-wrapper">
         <div className="auth-card">
           <div className="left">
-            <div className="brand">Velora</div>
+            <div className="brand">
+              <img src={logo} alt="logo" className="brand-logo" />
+              <span>Code Sparrow</span>
+            </div>
 
             <h2>Welcome Back!</h2>
             <div className="sub">Let's get you signed in securely.</div>

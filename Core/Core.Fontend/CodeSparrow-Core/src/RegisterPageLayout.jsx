@@ -1,6 +1,7 @@
 import { useState } from "react";
 import bg from "./assets/premium_vector-1713201017366-f764a073f393.webp";
 import { Link } from "react-router-dom";
+import logo from "./assets/brand.png";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -243,6 +244,20 @@ const showAlert = (msg, type) => {
   color: #166534;
   border: 1px solid #bbf7d0;
 }
+  .brand {
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 25px;
+  margin-bottom: 20px;
+  color: #6366f1;
+  text-transform: uppercase;
+}
+  .brand-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
 
 
         @media (max-width: 850px) {
@@ -260,7 +275,10 @@ const showAlert = (msg, type) => {
       <div className="auth-wrapper">
         <div className="auth-card">
           <div className="left">
-            <div className="brand">Velora</div>
+            <div className="brand">
+              <img src={logo} alt="logo" className="brand-logo" />
+              <span>Code Sparrow</span>
+            </div>
             
             <h2>Create Account</h2>
             <div className="sub">Join us and start your journey today.</div>
