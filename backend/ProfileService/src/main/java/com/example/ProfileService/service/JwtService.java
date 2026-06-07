@@ -1,4 +1,4 @@
-package com.example.DashboardService.service;
+package com.example.ProfileService.service;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +33,16 @@ public class JwtService {
         return extractAllClaims(token).getSubject();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> extractRoles(String token) {
-        // Roles must be stored in JWT claims by your auth service
-        return (List<String>) extractAllClaims(token).get("role");
+    public String extractRole(String token) {
+    return extractAllClaims(token)
+            .get("role", String.class);
     }
+
+    public Long extractUserId(String token) {
+            return extractAllClaims(token)
+            .get("userId", Long.class);
+    }
+    
 
     public boolean isTokenValid(String token) {
         try {

@@ -56,7 +56,7 @@ public class AuthController {
         return ResponseEntity.status(403).body("Refresh token expired");
     }
 
-    String newAccessToken = jwtService.generateToken(email);
+    String newAccessToken = jwtService.generateToken(email,user.getRole().name(),user.getId());
 
     return ResponseEntity.ok(Map.of(
         "accessToken", newAccessToken,

@@ -34,6 +34,7 @@ public class UserService implements IUserService{
     @Autowired
     private JwtService jwtService;
 
+
     @Override
     public ResponseDTO Register(RegisterDTO register) {
         Boolean username = repo.existsByUsername(register.getUsername());
@@ -72,23 +73,24 @@ public ResponseDTO login(RequestDTO request) {
         )
     );
 
-    String accessToken = jwtService.generateToken(request.getEmail());
-    String refreshToken = jwtService.generateRefreshToken(request.getEmail());
-
     Users user = repo.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("User not found"));
+
+    String accessToken = jwtService.generateToken(request.getEmail(),user.getRole().name(),user.getId());
+    String refreshToken = jwtService.generateRefreshToken(request.getEmail());
 
     user.setRefreshToken(refreshToken);
     repo.save(user);
 
     ResponseDTO response = new ResponseDTO();
     response.setMessage("Login successful");
+    response.setId(user.getId());
+    response.setRole(user.getRole());
     response.setEmail(request.getEmail());
     response.setAccessToken(accessToken);
     response.setRefreshToken(refreshToken); // 🔥 FIXED
 
     return response;
 }
-
-    
+ 
 }

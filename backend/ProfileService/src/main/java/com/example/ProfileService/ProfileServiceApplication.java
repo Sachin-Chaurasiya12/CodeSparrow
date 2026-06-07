@@ -1,13 +1,13 @@
-package com.example.DashboardService;
+package com.example.ProfileService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DashboardServiceApplication {
+public class ProfileServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DashboardServiceApplication.class, args);
+		SpringApplication.run(ProfileServiceApplication.class, args);
 	}
 
 }

@@ -2,6 +2,8 @@ package com.CodeSparrow.AuthService.model;
 
 import java.time.LocalDate;
 
+import org.springframework.context.annotation.Profile;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -34,6 +36,7 @@ public class Users {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
     private LocalDate CreatedAt;
     private String refreshToken;
 
