@@ -76,16 +76,18 @@ public ResponseDTO login(RequestDTO request) {
     Users user = repo.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-    String accessToken = jwtService.generateToken(request.getEmail(),user.getRole().name(),user.getId());
-    String refreshToken = jwtService.generateRefreshToken(request.getEmail());
+    String accessToken = jwtService.generateToken(request.getEmail(),user.getRole().name(),user.getId(),user.getUsername());
+    String refreshToken = jwtService.generateRefreshToken(request.getEmail(),user.getUsername(),user.getId(),user.getRole().name());
 
     user.setRefreshToken(refreshToken);
     repo.save(user);
 
     ResponseDTO response = new ResponseDTO();
     response.setMessage("Login successful");
+
     response.setId(user.getId());
     response.setRole(user.getRole());
+    response.setUsername(user.getUsername());
     response.setEmail(request.getEmail());
     response.setAccessToken(accessToken);
     response.setRefreshToken(refreshToken); // 🔥 FIXED

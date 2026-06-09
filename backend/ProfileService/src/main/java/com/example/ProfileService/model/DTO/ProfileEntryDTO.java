@@ -2,7 +2,6 @@ package com.example.ProfileService.model.DTO;
 
 public class ProfileEntryDTO {
 
-    private Long userId;
     private String firstName;
     private String lastName;
     private String username;
@@ -11,7 +10,6 @@ public class ProfileEntryDTO {
     private String website;
     private String phone;
     private String location;
-    private String avatarUrl;
     private String email;
     private String city;
     private String state;
@@ -21,11 +19,10 @@ public class ProfileEntryDTO {
     }
 
     // ✅ All-args constructor
-    public ProfileEntryDTO(Long userId, String firstName, String lastName, String username,
+    public ProfileEntryDTO(String firstName, String lastName, String username,
                            String company, String bio, String website, String phone,
-                           String location, String avatarUrl, String email,
+                           String location, String email,
                            String city, String state, String country) {
-        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.username = username;
@@ -34,19 +31,10 @@ public class ProfileEntryDTO {
         this.website = website;
         this.phone = phone;
         this.location = location;
-        this.avatarUrl = avatarUrl;
         this.email = email;
         this.city = city;
         this.state = state;
         this.country = country;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public String getFirstName() {
@@ -113,13 +101,6 @@ public class ProfileEntryDTO {
         this.location = location;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
 
     public String getEmail() {
         return email;

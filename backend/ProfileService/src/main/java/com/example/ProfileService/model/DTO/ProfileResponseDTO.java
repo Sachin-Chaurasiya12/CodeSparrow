@@ -2,9 +2,10 @@ package com.example.ProfileService.model.DTO;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class ProfileResponseDTO {
     
-    private Long userid;
     private String username;
     private String company;
     private String bio;
@@ -15,19 +16,24 @@ public class ProfileResponseDTO {
     private String city;
     private String state;
     private String country;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime joinedAt;
 
     public ProfileResponseDTO(){}
     public ProfileResponseDTO(String avatarUrl2, String bio2, String username2, String city2, String country2,
-            LocalDateTime joinedAt2, String website2, Long userId2, String company2) {
+            LocalDateTime joinedAt2, String website2, String company2,String phone2, String state2, String location2) {
         this.avatarUrl = avatarUrl2;
         this.bio = bio2;
         this.city = city2;
         this.company = company2;
         this.country = country2;
-        this.userid = userId2;
-        this.city = city2;
+        this.state = state2;
         this.website = website2; 
+        this.username = username2;
+        this.phone = phone2;
+        this.location = location2;
+        this.state = state2;
+        this.joinedAt = joinedAt2;
     }
     public String getAvatarUrl() {
         return avatarUrl;
@@ -92,11 +98,5 @@ public class ProfileResponseDTO {
     }
     public void setWebsite(String website) {
         this.website = website;
-    }
-    public Long getUserid() {
-        return userid;
-    }
-    public void setUserid(Long userid) {
-        this.userid = userid;
     }
 }

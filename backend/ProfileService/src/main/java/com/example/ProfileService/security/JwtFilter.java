@@ -52,6 +52,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String email = jwtUtil.extractEmail(token);
         String role = jwtUtil.extractRole(token);
         Long userId = jwtUtil.extractUserId(token);
+        String username = jwtUtil.extractUsername(token);
         // Map roles to Spring Security authorities — ROLE_ prefix required
         List<SimpleGrantedAuthority> authorities = List.of(
         new SimpleGrantedAuthority(
@@ -64,7 +65,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // Build authentication object and set in security context
         UserPrincipal principal =
-        new UserPrincipal(userId, email);
+        new UserPrincipal(userId, email,username);
 
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(
@@ -77,4 +78,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response); // continue chain
     }
+@Override
+protected boolean shouldNotFilter(HttpServletRequest request) {
+
+    String path = request.getRequestURI();
+
+    return path.startsWith("/v3/api-docs")
+        || path.startsWith("/swagger-ui")
+        || path.startsWith("/swagger-resources")
+        || path.startsWith("/webjars")
+        || path.equals("/swagger-ui.html")
+        || path.startsWith("/actuator");
+}
 }

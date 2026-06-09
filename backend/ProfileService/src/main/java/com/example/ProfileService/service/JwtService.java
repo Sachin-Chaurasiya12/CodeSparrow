@@ -43,6 +43,10 @@ public class JwtService {
             .get("userId", Long.class);
     }
     
+    public String extractUsername(String token) {
+            return extractAllClaims(token)
+            .get("username", String.class);
+    }
 
     public boolean isTokenValid(String token) {
         try {

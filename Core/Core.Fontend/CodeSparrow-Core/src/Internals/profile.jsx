@@ -1,13 +1,81 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfilePage({ onEditClick }) {
   const [activeTab, setActiveTab] = useState("solved");
-    const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch("http://localhost:8085/profile", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile");
+      }
+
+      const data = await response.json();
+
+      // console.log("Profile Data:", data);
+
+      setProfile(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProfile();
+}, []);
 
     const setting = async () => {
       navigate("/internal/profilesetting")
     }
+
+    if (loading) {
+        return (
+          <div
+            style={{
+              minHeight: "100vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: "20px",
+            }}
+          >
+            Loading Profile...
+          </div>
+        );
+      }
+      if (error) {
+        return (
+          <div
+            style={{
+              minHeight: "100vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "red",
+            }}
+          >
+            {error}
+          </div>
+        );
+      }
   return (
     <>
       <style>{`
@@ -351,12 +419,23 @@ export default function ProfilePage({ onEditClick }) {
             {/* Avatar + identity */}
             <div className="pp-avatar-row">
               <div className="pp-avatar-wrap">
-                <img src="https://i.pravatar.cc/150" alt="avatar" className="pp-avatar" />
+                <img
+                    src={
+                      profile?.avatarUrl ||
+                      "https://ui-avatars.com/api/?name=User"
+                    }
+                    alt="avatar"
+                    className="pp-avatar"
+                  />
                 <span className="pp-online" title="Online" />
               </div>
               <div className="pp-identity">
-                <div className="pp-name">Nathaniel Poole</div>
-                <div className="pp-role">Software Engineer · Microsoft Inc.</div>
+                <div className="pp-name">
+                  {profile?.username || "Unknown User"}
+                </div>
+                <div className="pp-role">
+                  {profile?.company || "No Company Added"}
+                </div>
               </div>
               <div className="pp-actions">
                 <button className="pp-btn-outline">Share Profile</button>
@@ -365,21 +444,33 @@ export default function ProfilePage({ onEditClick }) {
 
             {/* Bio + meta */}
             <div className="pp-bio-row">
-              <p className="pp-bio">
-                Passionate about building scalable systems and clean interfaces. Love competitive programming and contributing to open source on weekends.
-              </p>
+                <p className="pp-bio">
+                  {profile?.bio || "No bio available"}
+                </p>
               <div className="pp-meta">
                 <span className="pp-meta-item">
-                  <svg width="14" height="14" fill="none" stroke="#748ffc" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                  Mumbai, India
+                  {[
+                    profile?.city,
+                    profile?.state,
+                    profile?.country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </span>
                 <span className="pp-meta-item">
-                  <svg width="14" height="14" fill="none" stroke="#748ffc" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
-                  Joined Jan 2022
+                  Joined{" "}
+                  {profile?.joinedAt
+                    ? new Date(profile.joinedAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                        }
+                      )
+                    : "Recently"}
                 </span>
                 <span className="pp-meta-item">
-                  <svg width="14" height="14" fill="none" stroke="#748ffc" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                  nathanielpoole.dev
+                  {profile?.website || "No Website"}
                 </span>
               </div>
             </div>
