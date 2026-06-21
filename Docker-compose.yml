@@ -7,6 +7,7 @@ networks:
 volumes:
   auth-target:
   dashboard-target:
+  profile-target:
 
 services:
   auth-service:
@@ -46,6 +47,25 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - codesparrow-net
+    
+  profile-service:
+      build:
+        context: ./backend/ProfileService
+        dockerfile: Dockerfile
+      container_name: profile-service
+      restart: unless-stopped
+      environment:
+        SPRING_PROFILES_ACTIVE: docker
+        SERVER_PORT: 8085
+      ports:
+        - "8085:8085"
+      volumes:
+        - ./backend/ProfileService:/app
+        - profile-target:/app/target
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      networks:
+        - codesparrow-net
 
   frontend:
     build:
@@ -76,5 +96,6 @@ services:
       - frontend
       - auth-service
       - dashboard-service
+      - profile-service
     networks:
       - codesparrow-net

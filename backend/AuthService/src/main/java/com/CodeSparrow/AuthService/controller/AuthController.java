@@ -97,6 +97,14 @@ public class AuthController {
         return ResponseEntity.status(403)
                 .body("Invalid refresh token");
     }
+
+
+    String newAccessToken = jwtService.generateToken(email,user.getRole().name(),user.getId(),user.getUsername());
+
+    return ResponseEntity.ok(Map.of(
+        "accessToken", newAccessToken,
+        "refreshToken", refreshToken
+    ));
 }
 
 }
