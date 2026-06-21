@@ -3,9 +3,6 @@ package com.CodeSparrow.AuthService.model.DTO;
 import com.CodeSparrow.AuthService.model.Role;
 
 public class ResponseDTO {
-    private Long id;
-    private Role role;
-    private String username;
     private String message;
     private String email;
     private String accessToken;
@@ -32,23 +29,5 @@ public class ResponseDTO {
         return refreshToken;
     }public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
-    }
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public Role getRole() {
-        return role;
-    }
-    public void setRole(Role role) {
-        this.role = role;
-    }
-    public String getUsername() {
-        return username;
-    }
-    public void setUsername(String username) {
-        this.username = username;
     }
 }

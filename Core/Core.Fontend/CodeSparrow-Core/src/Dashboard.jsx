@@ -109,55 +109,6 @@ function ChallengeCard({ icon, iconBg, title, sub, desc, pct, barColor, tag, tag
 
 export default function Dashboard() {
 
-useEffect(() => {
-  const refreshToken = localStorage.getItem("refreshToken");
-
-  if (!refreshToken) {
-    window.location.href = "/login";
-    return;
-  }
-
-  const refreshAccessToken = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:8081/api/auth/refresh",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            refreshToken: refreshToken,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        window.location.href = "/login";
-        return;
-      }
-
-      localStorage.setItem(
-        "accessToken",   // ✅ correct spelling
-        data.accessToken
-      );
-
-    } catch (error) {
-      console.error("FULL ERROR:", error);
-
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-
-      window.location.href = "/login";
-    }
-  };
-
-  refreshAccessToken();
-}, []);
   const challenges = [
     {
       icon: "⚔️",

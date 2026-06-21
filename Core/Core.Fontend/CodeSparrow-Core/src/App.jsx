@@ -4,7 +4,7 @@
   import Dashboard from "./Dashboard";
   import ProtectedRoute from "./components/ProtectedRoute";
   import Profile from "./Internals/profile";
-  import Profilesetting from "./Internals/profilesetting";
+  // import Profilesetting from "./Internals/profilesetting";
   import MainLayout from "./Layout/Layout";
 
   
@@ -46,14 +46,14 @@
             </ProtectedRoute>
           }
         />
-        <Route 
+        {/* <Route 
           path="/internal/profilesetting"
           element={
             <ProtectedRoute>
               <Profilesetting />
             </ProtectedRoute>
           }
-        />
+        /> */}
         </Route>
         {/* default */}
         <Route

@@ -23,16 +23,9 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretkey;
 
-
     public String generateToken(String username, Users user) {
         Map<String,Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
-
-    public String generateToken(String username, String role, Long userId,String name) {
-        Map<String,Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("role", role);
-        claims.put("username", name);
         return Jwts.builder()
                     .addClaims(claims)
                     .setSubject(username)
@@ -77,28 +70,13 @@ public class JwtService {
         return extractClaims(token,Claims::getExpiration);
     }
 
-    public String generateRefreshToken(
-        String email,
-        String role,
-        Long userId,
-        String username) {
-
-    Map<String, Object> claims = new HashMap<>();
-
-    claims.put("userId", userId);
-    claims.put("role", role);
-    claims.put("username", username);
-
+    public String generateRefreshToken(String email) {
     return Jwts.builder()
-            .addClaims(claims)
-            .setSubject(email)
-            .setIssuedAt(new Date())
-            .setExpiration(
-                new Date(System.currentTimeMillis()
-                    + 1000L * 60 * 60 * 24 * 7)
-            )
-            .signWith(getKey())
-            .compact();
+        .setSubject(email)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
+        .signWith(getKey())
+        .compact();
 }
 
 
