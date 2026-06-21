@@ -50,6 +50,7 @@ public class SecurityConfig {
 
                 // Health check — allow without token (for load balancers, k8s probes)
                 .requestMatchers("/actuator/health").permitAll()
+                 .requestMatchers("/internal/**").permitAll()
 
                 // Admin-only routes
                 .requestMatchers("/admin/**").hasRole("ADMIN")

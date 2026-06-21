@@ -1,9 +1,11 @@
 package com.CodeSparrow.AuthService.controller;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import com.CodeSparrow.AuthService.service.JwtService;
 import com.CodeSparrow.AuthService.service.interfaces.IUserService;
 
 @RestController
+@CrossOrigin(origins = "http://localhost")
 @RequestMapping("/api/auth")
 public class AuthController {
 
@@ -41,27 +44,59 @@ public class AuthController {
     }
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
-
+    
     String refreshToken = body.get("refreshToken");
-    String email = jwtService.extractUsername(refreshToken);
 
-    Users user = repo.findByEmail(email).orElseThrow();
-
-    // check DB stored token
-    if (!refreshToken.equals(user.getRefreshToken())) {
-        return ResponseEntity.status(403).body("Invalid refresh token");
+    if (refreshToken == null || refreshToken.isBlank()) {
+        return ResponseEntity.status(403)
+                .body("Refresh token missing");
     }
 
-    if (jwtService.isTokenExpired(refreshToken)) {
-        return ResponseEntity.status(403).body("Refresh token expired");
+    try {
+
+        // Extract email from JWT
+        String email = jwtService.extractUsername(refreshToken);
+
+        // Check if user exists
+        Optional<Users> optionalUser = repo.findByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(403)
+                    .body("User not found");
+        }
+
+        Users user = optionalUser.get();
+
+        // Check token stored in DB
+        if (user.getRefreshToken() == null ||
+                !refreshToken.equals(user.getRefreshToken())) {
+
+            return ResponseEntity.status(403)
+                    .body("Invalid refresh token");
+        }
+
+        // Check expiration
+        if (jwtService.isTokenExpired(refreshToken)) {
+            return ResponseEntity.status(403)
+                    .body("Refresh token expired");
+        }
+
+        // Generate new access token
+        String newAccessToken =
+                jwtService.generateToken(email, user);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "accessToken", newAccessToken,
+                        "refreshToken", refreshToken
+                )
+        );
+
+    } catch (Exception e) {
+
+        return ResponseEntity.status(403)
+                .body("Invalid refresh token");
     }
-
-    String newAccessToken = jwtService.generateToken(email);
-
-    return ResponseEntity.ok(Map.of(
-        "accessToken", newAccessToken,
-        "refreshToken", refreshToken
-    ));
 }
 
 }

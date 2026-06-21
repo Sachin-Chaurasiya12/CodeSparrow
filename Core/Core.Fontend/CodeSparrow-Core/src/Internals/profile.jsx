@@ -8,15 +8,19 @@ export default function ProfilePage() {
   useEffect(() => {
   const fetchCountries = async () => {
     try {
-      const res = await fetch("https://restcountries.com/v3.1/all?fields=name");
-      const data = await res.json();
+      const res = await fetch(
+        "https://countriesnow.space/api/v0.1/countries/flag/images"
+      );
 
-      const formatted = data
+      const result = await res.json();
+
+      const formatted = result.data
         .map((c) => ({
-          name: c.name.common,
+          name: c.name,
+          flag: c.flag,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
- 
+
       setCountries(formatted);
     } catch (err) {
       console.error(err);

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.CodeSparrow.AuthService.model.Users;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -21,13 +23,14 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretkey;
 
-    public String generateToken(String username) {
+    public String generateToken(String username, Users user) {
         Map<String,Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
         return Jwts.builder()
                     .addClaims(claims)
                     .setSubject(username)
                     .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))
                     .signWith(getKey())
                     .compact();
     }
