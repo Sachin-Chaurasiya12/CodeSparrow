@@ -24,39 +24,57 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtService jwtService;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+   @Override
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain filterChain)
+        throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+    System.out.println("========== JWT FILTER ==========");
+    System.out.println(request.getRequestURI());
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    String authHeader = request.getHeader("Authorization");
 
-        String token = authHeader.substring(7);
+    System.out.println("Authorization Header = " + authHeader);
 
-        if (jwtService.validateToken(token)) {
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        System.out.println("No Bearer Token");
+        filterChain.doFilter(request, response);
+        return;
+    }
 
-            String username = jwtService.extractUsername(token);
+    String token = authHeader.substring(7);
+
+    try {
+
+        System.out.println("Token = " + token);
+
+        boolean valid = jwtService.validateToken(token);
+
+        System.out.println("Token valid = " + valid);
+
+        if(valid){
+
+            Long userId = jwtService.extractUserId(token);
+
+            System.out.println("UserId = " + userId);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            username,
+                            userId,
                             null,
                             List.of(new SimpleGrantedAuthority("ROLE_USER"))
                     );
 
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            System.out.println("Authentication set");
         }
 
-        filterChain.doFilter(request, response);
+    } catch(Exception e){
+        e.printStackTrace();
     }
+
+    filterChain.doFilter(request,response);
+}
 }

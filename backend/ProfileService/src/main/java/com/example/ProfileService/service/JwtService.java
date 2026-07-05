@@ -2,6 +2,7 @@ package com.example.ProfileService.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,13 +19,17 @@ public class JwtService {
     private String secret;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    byte[] keyBytes = Decoders.BASE64.decode(secret);
+    return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Long extractUserId(String token) {
+    return extractAllClaims(token).get("userId", Long.class);
+    }
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -48,10 +53,11 @@ public class JwtService {
     }
 
     public boolean validateToken(String token) {
-        try {
-            return !isTokenExpired(token);
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+    try {
+        return !isTokenExpired(token);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
     }
+}
 }

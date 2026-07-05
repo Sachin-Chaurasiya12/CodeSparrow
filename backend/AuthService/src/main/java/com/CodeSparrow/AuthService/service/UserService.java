@@ -84,7 +84,6 @@ public class UserService implements IUserService{
         restTemplate.postForObject(url, profile, String.class);
 
         return dto;
-
     }
     @Override
 public ResponseDTO login(RequestDTO request) {

@@ -28,8 +28,7 @@ public class Securityconfig {
                         "/api/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/internal/**"
+                        "/swagger-ui.html"
                 ).permitAll()
 
                 .requestMatchers(HttpMethod.POST, "/profile").permitAll()

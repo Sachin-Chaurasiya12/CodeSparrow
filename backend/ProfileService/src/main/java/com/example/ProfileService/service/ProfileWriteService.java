@@ -28,7 +28,7 @@ public class ProfileWriteService implements IProfileWriteService{
         MaptoRequest(request);
     }
 
-    public void MaptoRequest(ProfileRequestdto request){
+    private void MaptoRequest(ProfileRequestdto request){
 
         Profile file = new Profile();
         file.setUserId(request.getUserId());

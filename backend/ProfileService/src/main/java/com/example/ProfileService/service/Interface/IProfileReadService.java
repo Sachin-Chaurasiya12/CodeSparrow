@@ -1,7 +1,9 @@
 package com.example.ProfileService.service.Interface;
 
+import com.example.ProfileService.model.Dto.ProfileResponsedto;
 
-public class IProfileReadService {
+public interface IProfileReadService {
 
+    ProfileResponsedto getProfile(Long userId);
     
 }
