@@ -26,13 +26,14 @@ public class JwtService {
     public String generateToken(String username, Users user) {
         Map<String,Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
+        claims.put("username", user.getUsername());
         return Jwts.builder()
-                    .addClaims(claims)
-                    .setSubject(username)
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))
-                    .signWith(getKey())
-                    .compact();
+        .addClaims(claims)
+        .setSubject(username)
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))
+        .signWith(getKey())
+        .compact();
     }
 
     public SecretKey getKey(){
@@ -42,6 +43,13 @@ public class JwtService {
 
     public String extractUsername(String token) {
        return extractClaims(token,Claims::getSubject);
+    }
+    public Long extractUserId(String token) {
+    return extractClaims(token, claims -> claims.get("userId", Long.class));
+    }
+
+    public String extractUserNameClaim(String token) {
+        return extractClaims(token, claims -> claims.get("username", String.class));
     }
 
     private <T> T extractClaims(String token,Function<Claims,T> claimResolver) {

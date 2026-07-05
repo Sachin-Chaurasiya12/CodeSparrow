@@ -179,7 +179,7 @@ export default function ProfileApp() {
 
         .banner-upload-btn {
           position: absolute;
-          bottom: 20px;
+          bottom: 50px;
           right: 70px;
           z-index: 4;
         }

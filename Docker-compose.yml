@@ -7,7 +7,6 @@ networks:
 volumes:
   auth-target:
   dashboard-target:
-  profile-target:
 
 services:
   auth-service:

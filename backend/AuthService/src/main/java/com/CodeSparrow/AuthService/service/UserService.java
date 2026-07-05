@@ -5,15 +5,18 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.CodeSparrow.AuthService.Exception.UserAlreadyExistException;
 import com.CodeSparrow.AuthService.model.Role;
 import com.CodeSparrow.AuthService.model.Users;
+import com.CodeSparrow.AuthService.model.DTO.ProfileRequest;
 import com.CodeSparrow.AuthService.model.DTO.RegisterDTO;
 import com.CodeSparrow.AuthService.model.DTO.RequestDTO;
 import com.CodeSparrow.AuthService.model.DTO.ResponseDTO;
@@ -33,6 +36,9 @@ public class UserService implements IUserService{
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    public RestTemplate restTemplate;
 
     @Override
     public ResponseDTO Register(RegisterDTO register) {
@@ -58,6 +64,24 @@ public class UserService implements IUserService{
         ResponseDTO dto = new ResponseDTO();
         dto.setMessage("User Created Successfully");
         dto.setEmail(user.getEmail());
+
+        ProfileRequest profile = new ProfileRequest();
+
+        profile.setUserId(user.getId());
+        profile.setUsername(user.getUsername());
+        profile.setFullname(user.getName());
+        profile.setBio("Hii I am on Codesnippet");
+        profile.setCity("");
+        profile.setCompany("");
+        profile.setCountry("");
+        profile.setEmail(user.getEmail());
+        profile.setSnippets(0);
+        profile.setSolved(0);
+        profile.setState("");
+
+        String url = "http://localhost:8083/profile";
+
+        restTemplate.postForObject(url, profile, String.class);
 
         return dto;
 
@@ -88,7 +112,9 @@ public ResponseDTO login(RequestDTO request) {
     response.setMessage("Login successful");
     response.setEmail(request.getEmail());
     response.setAccessToken(accessToken);
-    response.setRefreshToken(refreshToken); // 🔥 FIXED
+    response.setRefreshToken(refreshToken); 
+    response.setUserId(user.getId());
+    response.setUsername(user.getUsername());
 
     return response;
 }
