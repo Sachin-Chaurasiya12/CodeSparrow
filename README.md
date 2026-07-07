@@ -262,5 +262,5 @@ https://github.com/Sachin-Chaurasiya12
 
 Licensed under the Apache License 2.0.
 
-## Be a Co Worker : 
-For Contribution Gmail on sachinchau444@gmail.com
+## You can be a Co-Working Partner In this project : 
+For Contribution **Gmail** on *sachinchau444@gmail.com*
