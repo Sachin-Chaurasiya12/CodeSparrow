@@ -19,7 +19,7 @@ public class Securityconfig {
     public JwtFilter jwtFilter;
     
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http){
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http
             .cors(Customizer.withDefaults()) 
             .csrf(csrf -> csrf.disable())

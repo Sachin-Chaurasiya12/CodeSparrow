@@ -79,7 +79,7 @@ public class UserService implements IUserService{
         profile.setSolved(0);
         profile.setState("");
 
-        String url = "http://localhost:8083/profile";
+        String url = "http://profile-service:8083/profile";
 
         restTemplate.postForObject(url, profile, String.class);
 

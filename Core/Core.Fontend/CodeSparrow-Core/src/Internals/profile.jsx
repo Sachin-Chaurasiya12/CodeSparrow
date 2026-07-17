@@ -4,24 +4,48 @@ export default function ProfileApp() {
   const [currentPage, setCurrentPage] = useState("profile");
   const [countries, setCountries] = useState([]);
   const [bannerImage, setBannerImage] = useState("linear-gradient(135deg, #667eea 0%, #764ba2 35%, #f093fb 100%)");
+  
 
-  const [profileData, setProfileData] = useState({
-    name: "Nathaniel Poole",
-    username: "npoole",
-    email: "nathaniel.poole@microsoft.com",
-    phone: "+1 (425) 555-0172",
-    city: "Redmond",
-    state: "Washington",
-    country: "United States",
-    bio: "Full-stack developer passionate about building scalable applications",
-    company: "Microsoft Inc.",
-    codeSnippets: 32,
-    problemsSolved: 26,
-    joinDate: "Joined March 2023",
-    avatar: "https://i.pravatar.cc/150"
-  });
+  const [profileData, setProfileData] = useState(null);
+  const [formData, setFormData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [formData, setFormData] = useState(profileData);
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch("http://localhost:8083/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile");
+      }
+
+      const data = await response.json();
+
+      setProfileData(data);
+      setFormData(data);
+      if (data.bannerSecureUrl) {
+        setBannerImage(`url('${data.bannerSecureUrl}')`);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -36,11 +60,12 @@ export default function ProfileApp() {
           .sort((a, b) => a.name.localeCompare(b.name));
         setCountries(formatted);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch countries:", err);
       }
     };
     fetchCountries();
   }, []);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -61,6 +86,18 @@ export default function ProfileApp() {
     }
   };
 
+  const formatDate = (dateString) => {
+  if (!dateString) return "Recently ";
+
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
   const handleSave = () => {
     setProfileData(formData);
     setCurrentPage("profile");
@@ -71,10 +108,78 @@ export default function ProfileApp() {
     setCurrentPage("profile");
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f5f7fb 0%, #e9ecf1 100%)',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid #e0e0e0',
+            borderTop: '4px solid #667eea',
+            borderRadius: '50%',
+            margin: '0 auto 20px',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{ color: '#666', fontSize: '16px' }}>Loading profile...</p>
+          <style>{`
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !profileData || !formData) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f5f7fb 0%, #e9ecf1 100%)',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <p style={{ color: '#d32f2f', fontSize: '16px', marginBottom: '20px' }}>
+            {error || "Failed to load profile"}
+          </p>
+          <button 
+            onClick={fetchProfile}
+            style={{
+              padding: '10px 20px',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
+    
       <style>{`
-        * {
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');        * {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
@@ -86,6 +191,36 @@ export default function ProfileApp() {
           min-height: 100vh;
         }
 
+        .top-username {
+          margin-bottom: 3px;
+          display: inline-block;
+          overflow: hidden;
+          white-space: nowrap;
+
+          width: 0;
+          animation: expandUsername 1s ease forwards;
+
+         font-family: "Clash Display", sans-serif;
+           font-size: 30px;
+          font-weight: 700;
+
+          color: white;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+
+          padding: 8px 18px;
+          border-radius: 50px;
+        }
+
+        @keyframes expandUsername {
+          from {
+            width: 0;
+            opacity: 0;
+          }
+          to {
+            width: 200px;
+            opacity: 1;
+          }
+        }
         .page-container {
           min-height: 100vh;
           padding: 40px 20px;
@@ -267,7 +402,7 @@ export default function ProfileApp() {
         }
 
         .profile-card .company {
-          font-size: 16px;
+          font-size: 12px;
           color: #667eea;
           font-weight: 600;
           margin-bottom: 22px;
@@ -624,7 +759,15 @@ export default function ProfileApp() {
           <div className="banner-content">
             <div className="banner-text">
               <h1>Welcome Back!</h1>
-              <p>{currentPage === "profile" ? "View your profile and achievements" : "Update your profile information"}</p>
+              <p>{currentPage === "profile" ? (
+                <>
+                  View your profile and achievements{" "}
+                  <b>{profileData?.username}</b>
+                </>
+              ) : (
+                "Update your profile and achivements"
+              )}
+              </p>
             </div>
             
           </div>
@@ -648,25 +791,28 @@ export default function ProfileApp() {
         <div className="content-wrapper">
           {/* Left Sidebar - Profile Card */}
           <div className="profile-card">
+            <h1 className="top-username">@{profileData?.username}</h1>
             <div className="avatar-container">
-              <img src={profileData.avatar} alt="Profile" className="avatar" />
+              <img src={profileData?.avatarSecureUrl || `https://ui-avatars.com/api/?name=${profileData?.username || 'user'}&background=667eea&color=fff`} alt="Profile" className="avatar" />
             </div>
-            <h2>{profileData.name}</h2>
-            <p className="company">{profileData.company}</p>
-            <p className="bio">{profileData.bio}</p>
+            <h2 className="fullname">{profileData?.fullname}</h2>
+            <p className="company">Company : {profileData?.company || "Not specified"}</p>
+            <p className="bio">{profileData?.bio || "No bio added yet"}</p>
 
             <div className="stats-grid">
               <div className="stat-item">
-                <span className="stat-value">{profileData.codeSnippets}</span>
+                <span className="stat-value">{profileData?.snippets ?? 0}</span>
                 <span className="stat-label">Snippets</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value">{profileData.problemsSolved}</span>
+                <span className="stat-value">{profileData?.solved ?? 0}</span>
                 <span className="stat-label">Solved</span>
               </div>
             </div>
 
-            <p className="join-date">{profileData.joinDate}</p>
+            <p className="join-date">
+              Joined {formatDate(profileData?.joinedAt)}
+            </p>
 
             {currentPage === "profile" ? (
               <button className="btn-primary" onClick={() => setCurrentPage("settings")}>
@@ -699,35 +845,35 @@ export default function ProfileApp() {
                   <p style={{ fontSize: "12px", color: "#999", marginBottom: "5px", textTransform: "uppercase", fontWeight: "500" }}>
                     Email
                   </p>
-                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData.email}</p>
+                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData?.email || "Not provided"}</p>
                 </div>
 
                 <div>
                   <p style={{ fontSize: "12px", color: "#999", marginBottom: "5px", textTransform: "uppercase", fontWeight: "500" }}>
                     Phone
                   </p>
-                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData.phone}</p>
+                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData?.phonenumber || "Not provided"}</p>
                 </div>
 
                 <div>
                   <p style={{ fontSize: "12px", color: "#999", marginBottom: "5px", textTransform: "uppercase", fontWeight: "500" }}>
                     City
                   </p>
-                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData.city}</p>
+                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData?.city || "Not provided"}</p>
                 </div>
 
                 <div>
                   <p style={{ fontSize: "12px", color: "#999", marginBottom: "5px", textTransform: "uppercase", fontWeight: "500" }}>
                     State
                   </p>
-                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData.state}</p>
+                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData?.state || "Not provided"}</p>
                 </div>
 
                 <div style={{ gridColumn: "1 / -1" }}>
                   <p style={{ fontSize: "12px", color: "#999", marginBottom: "5px", textTransform: "uppercase", fontWeight: "500" }}>
                     Country
                   </p>
-                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData.country}</p>
+                  <p style={{ fontSize: "15px", color: "#333", fontWeight: "500" }}>{profileData?.country || "Not provided"}</p>
                 </div>
               </div>
             </div>
@@ -745,7 +891,7 @@ export default function ProfileApp() {
                   <input
                     type="text"
                     name="username"
-                    value={formData.username}
+                    value={formData?.username || ""}
                     onChange={handleInputChange}
                     placeholder="Enter username"
                   />
@@ -755,8 +901,8 @@ export default function ProfileApp() {
                   <label>Full Name</label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="fullname"
+                    value={formData?.fullname || ""}
                     onChange={handleInputChange}
                     placeholder="Enter your name"
                   />
@@ -767,7 +913,7 @@ export default function ProfileApp() {
                   <input
                     type="email"
                     name="email"
-                    value={formData.email}
+                    value={formData?.email || ""}
                     onChange={handleInputChange}
                     placeholder="Enter email"
                   />
@@ -777,8 +923,8 @@ export default function ProfileApp() {
                   <label>Phone Number</label>
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    name="phonenumber"
+                    value={formData?.phonenumber || ""}
                     onChange={handleInputChange}
                     placeholder="Enter phone number"
                   />
@@ -789,7 +935,7 @@ export default function ProfileApp() {
                   <input
                     type="text"
                     name="city"
-                    value={formData.city}
+                    value={formData?.city || ""}
                     onChange={handleInputChange}
                     placeholder="Enter city"
                   />
@@ -800,7 +946,7 @@ export default function ProfileApp() {
                   <input
                     type="text"
                     name="state"
-                    value={formData.state}
+                    value={formData?.state || ""}
                     onChange={handleInputChange}
                     placeholder="Enter state"
                   />
@@ -808,7 +954,7 @@ export default function ProfileApp() {
 
                 <div className="form-group">
                   <label>Country</label>
-                  <select name="country" value={formData.country} onChange={handleInputChange}>
+                  <select name="country" value={formData?.country || ""} onChange={handleInputChange}>
                     <option value="">Select Country</option>
                     {countries.map((c, index) => (
                       <option key={index} value={c.name}>
@@ -823,7 +969,7 @@ export default function ProfileApp() {
                   <input
                     type="text"
                     name="company"
-                    value={formData.company}
+                    value={formData?.company || ""}
                     onChange={handleInputChange}
                     placeholder="Enter company"
                   />
@@ -833,7 +979,7 @@ export default function ProfileApp() {
                   <label>Bio</label>
                   <textarea
                     name="bio"
-                    value={formData.bio}
+                    value={formData?.bio || ""}
                     onChange={handleInputChange}
                     placeholder="Tell us about yourself..."
                   />
