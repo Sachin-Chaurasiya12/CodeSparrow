@@ -6,44 +6,31 @@ export default function ProtectedRoute({ children }) {
   const [authenticated, setAuthenticated] = useState(null);
 
   useEffect(() => {
-    const refreshToken = localStorage.getItem("refreshToken");
-
-    if (!refreshToken) {
-      setAuthenticated(false);
-      return;
-    }
-
     const refreshAccessToken = async () => {
       try {
         const response = await fetch(
           "http://localhost:8081/api/auth/refresh",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              refreshToken,
-            }),
+            credentials: "include", 
           }
         );
 
-        const data = await response.json();
-
         if (!response.ok) {
           localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
           setAuthenticated(false);
           return;
         }
 
+        const data = await response.json();
+
         localStorage.setItem("accessToken", data.accessToken);
+
         setAuthenticated(true);
       } catch (error) {
-        console.error("FULL ERROR:", error);
+        console.error("Refresh failed:", error);
 
         localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
 
         setAuthenticated(false);
       }
@@ -52,7 +39,6 @@ export default function ProtectedRoute({ children }) {
     refreshAccessToken();
   }, []);
 
-  // Loading while refresh request is running
  if (authenticated === null) {
   return (
     <div className="loader-overlay">

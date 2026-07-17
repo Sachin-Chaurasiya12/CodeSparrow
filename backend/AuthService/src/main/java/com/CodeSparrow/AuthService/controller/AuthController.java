@@ -1,9 +1,13 @@
 package com.CodeSparrow.AuthService.controller;
 
+import org.springframework.http.HttpHeaders;
 import java.util.Map;
 import java.util.Optional;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +22,8 @@ import com.CodeSparrow.AuthService.model.DTO.ResponseDTO;
 import com.CodeSparrow.AuthService.repository.UserRepository;
 import com.CodeSparrow.AuthService.service.JwtService;
 import com.CodeSparrow.AuthService.service.interfaces.IUserService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @CrossOrigin(origins = "http://localhost")
@@ -35,29 +41,49 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody RequestDTO req){
-        return ResponseEntity.ok(service.login(req));
+    public ResponseEntity<?> login(@RequestBody RequestDTO req,HttpServletResponse response){
+        ResponseDTO dto = service.login(req);
+        
+        ResponseCookie cookie = ResponseCookie
+                    .from("refreshToken", dto.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .sameSite("Lax")
+                    .path("/api/auth")
+                    .maxAge(60 * 60 * 24 * 7)
+                    .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(dto);
     }
     @PostMapping("/register")
     public ResponseDTO register(@RequestBody RegisterDTO dto){
         return service.Register(dto);
     }
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
-    
-    String refreshToken = body.get("refreshToken");
 
-    if (refreshToken == null || refreshToken.isBlank()) {
+@PostMapping("/refresh")
+public ResponseEntity<?> refresh(HttpServletRequest request) {
+
+    String refreshToken = null;
+
+    if (request.getCookies() != null) {
+        for (Cookie cookie : request.getCookies()) {
+            if ("refreshToken".equals(cookie.getName())) {
+                refreshToken = cookie.getValue();
+                break;
+            }
+        }
+    }
+
+    if (refreshToken == null) {
         return ResponseEntity.status(403)
                 .body("Refresh token missing");
     }
 
     try {
 
-        // Extract email from JWT
         String email = jwtService.extractUsername(refreshToken);
 
-        // Check if user exists
         Optional<Users> optionalUser = repo.findByEmail(email);
 
         if (optionalUser.isEmpty()) {
@@ -67,7 +93,6 @@ public class AuthController {
 
         Users user = optionalUser.get();
 
-        // Check token stored in DB
         if (user.getRefreshToken() == null ||
                 !refreshToken.equals(user.getRefreshToken())) {
 
@@ -75,20 +100,18 @@ public class AuthController {
                     .body("Invalid refresh token");
         }
 
-        // Check expiration
         if (jwtService.isTokenExpired(refreshToken)) {
+
             return ResponseEntity.status(403)
                     .body("Refresh token expired");
         }
 
-        // Generate new access token
         String newAccessToken =
                 jwtService.generateToken(email, user);
 
         return ResponseEntity.ok(
                 Map.of(
-                        "accessToken", newAccessToken,
-                        "refreshToken", refreshToken
+                        "accessToken", newAccessToken
                 )
         );
 
