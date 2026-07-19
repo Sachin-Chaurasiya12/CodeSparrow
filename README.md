@@ -48,7 +48,7 @@ into one unified system focused on **learning retention and reuse**.
 * Buy Study Material
 * Buy Snippets 
 * Reuse it in future problems
-* every thing with your earned points *no real Money!*
+* every thing with your earned points **no real Money!**
 
 ### 👥 Shared Knowledge (Friends Mode)
 
