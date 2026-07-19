@@ -61,6 +61,22 @@ public class AuthController {
         return service.Register(dto);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+
+    ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+            .httpOnly(true)
+            .secure(false) 
+            .sameSite("Lax")
+            .path("/api/auth")  
+            .maxAge(0)          
+            .build();
+
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+    return ResponseEntity.ok("Logged out successfully");
+    }
+
 @PostMapping("/refresh")
 public ResponseEntity<?> refresh(HttpServletRequest request) {
 

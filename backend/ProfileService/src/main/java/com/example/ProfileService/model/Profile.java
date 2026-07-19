@@ -1,10 +1,14 @@
 package com.example.ProfileService.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "profiles")
+
 public class Profile {
 
     @Id
@@ -16,12 +20,16 @@ public class Profile {
 
     private String fullname;
 
+    @Size(max = 225, message = "Bio cannot exceed 225 characters")
     private String bio;
 
     private Integer snippets;
 
     private Integer solved;
-
+    @Pattern(
+        regexp = "^[0-9]{10}$",
+        message = "Phone number must be exactly 10 digits"
+    )
     private String phonenumber;
 
     private String city;

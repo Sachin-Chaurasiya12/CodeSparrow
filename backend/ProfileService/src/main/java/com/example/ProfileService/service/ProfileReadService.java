@@ -45,6 +45,11 @@ public class ProfileReadService implements IProfileReadService{
     dto.setPhonenumber(profile.getPhonenumber());
     dto.setSolved(profile.getSolved());
     dto.setSnippets(profile.getSnippets());
+    dto.setJoinedAt(profile.getJoined_at());
+    dto.setAvatarPublicId(profile.getAvatarPublicId());
+    dto.setAvatarSecureUrl(profile.getAvatarSecureUrl());
+    dto.setBannerPublicId(profile.getBannerPublicId());
+    dto.setBannerSecureUrl(profile.getBannerSecureUrl());
 
     return dto;
 }

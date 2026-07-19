@@ -24,7 +24,7 @@ public class ProfileResponsedto {
     private String bannerPublicId;
     private String bannerSecureUrl;
 
-    private LocalDateTime joinedAt;
+    private LocalDateTime joined_at;
 
     public ProfileResponsedto() {
     }
@@ -35,7 +35,7 @@ public class ProfileResponsedto {
                               String state, String country, String company,
                               String avatarPublicId, String avatarSecureUrl,
                               String bannerPublicId, String bannerSecureUrl,
-                              LocalDateTime joinedAt) {
+                              LocalDateTime joined_at) {
 
         this.id = id;
         this.userId = userId;
@@ -54,7 +54,7 @@ public class ProfileResponsedto {
         this.avatarSecureUrl = avatarSecureUrl;
         this.bannerPublicId = bannerPublicId;
         this.bannerSecureUrl = bannerSecureUrl;
-        this.joinedAt = joinedAt;
+        this.joined_at = joined_at;
     }
 
     public Long getId() {
@@ -194,10 +194,10 @@ public class ProfileResponsedto {
     }
 
     public LocalDateTime getJoinedAt() {
-        return joinedAt;
+        return joined_at;
     }
 
     public void setJoinedAt(LocalDateTime joinedAt) {
-        this.joinedAt = joinedAt;
+        this.joined_at = joinedAt;
     }
 }

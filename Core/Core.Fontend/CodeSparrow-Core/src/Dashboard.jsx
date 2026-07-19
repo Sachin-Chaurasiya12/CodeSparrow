@@ -217,18 +217,22 @@ export default function Dashboard() {
 
 const styles = {
   wrapper: {
-    minHeight: "100vh",
-    background: "#f4f6fb",
-    fontFamily: "Inter, sans-serif",
-    overflowX: "hidden",
-  },
+  minHeight: "100vh",
+  width: "100%",
+  background: "#f4f6fb",
+  fontFamily: "Inter, sans-serif",
+  overflowX: "hidden",
+},
 
   content: {
-    padding: 18,
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-  },
+  width: "100%",
+  maxWidth: 1400,
+  margin: "0 auto",
+  padding: "20px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 18,
+},
 
   sectionTitle: {
     fontSize: 12,
@@ -238,10 +242,10 @@ const styles = {
   },
 
   statGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 10,
-  },
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+  gap: 16,
+},
 
   statCard: {
     background: "white",

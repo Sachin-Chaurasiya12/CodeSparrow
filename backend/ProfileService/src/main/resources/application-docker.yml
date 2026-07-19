@@ -14,3 +14,7 @@ eureka.client.register-with-eureka=true
 eureka.client.fetch-registry=true
 
 eureka.instance.prefer-ip-address=true
+
+cloudinary.cloud_name=drwjaxxyy
+cloudinary.api_key=875287222527878
+cloudinary.api_secret=r4qEeA_hZK-WNdCyQLpA3OVRLvU

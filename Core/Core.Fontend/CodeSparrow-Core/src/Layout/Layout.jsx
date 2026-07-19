@@ -11,11 +11,21 @@ export default function LayoutShell() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-
-  navigate("/", { replace: true }); // login page
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8081/api/auth/logout", {
+        method: "POST",
+        credentials: "include",  
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Logout failed : ",error);
+    }finally{
+      localStorage.removeItem("accessToken");
+      navigate("/login", { replace: true }); // login page
+    }
   };
 
   const navItems = [
@@ -61,7 +71,6 @@ export default function LayoutShell() {
         </div>
 
         <motion.input
-          whileFocus={{ scale: 1.02 }}
           placeholder="Search..."
           style={styles.search}
         />
@@ -190,14 +199,15 @@ const styles = {
     background: "#f4f6fb",
   },
 
-  topbar: {
+topbar: {
   height: 64,
   display: "flex",
   alignItems: "center",
-  gap: 10, // slightly tighter
+  gap: 10,
   padding: "0 16px",
   background: "white",
   borderBottom: "1px solid rgba(0,0,0,0.06)",
+  position: "relative",   // <-- add this
 },
 
 
@@ -220,15 +230,15 @@ const styles = {
   brand: { fontWeight: 600, color: "#534AB7" ,gap:-2},
 
 search: {
-  flex: 1,
-  maxWidth: 320,
+  position: "absolute",
+  left: "50%",
+  transform: "translateX(-50%)",
+  width: "clamp(180px, 35vw, 380px)",
   height: 36,
   borderRadius: 10,
   border: "1px solid rgba(0,0,0,0.1)",
   padding: "0 12px",
   background: "#F1EFE8",
-  marginLeft: 8,
-  marginRight: 8,
 },
 
 

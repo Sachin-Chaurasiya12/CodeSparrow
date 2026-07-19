@@ -30,22 +30,9 @@
             </ProtectedRoute>
           }
         >
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/internal/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/internal/profile" element={<Profile />} />
+
         {/* <Route 
           path="/internal/profilesetting"
           element={
