@@ -8,7 +8,7 @@ A developer-focused platform to **practice DSA, store reusable code, and build a
 
 **CodeSparrow** is designed to solve a common problem:
 
-> Developers solve problems but forget patterns and struggle to reuse solutions later.
+> Developers solve problems but forget patterns and struggle to reuse solutions later, and the most important they have to use different platforms for different ask
 
 This platform connects learning, storing, and reusing code into a single workflow:
 
