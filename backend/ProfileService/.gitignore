@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore sensitive config
+src/main/resources/application.properties
+src/main/resources/application-docker.yml
