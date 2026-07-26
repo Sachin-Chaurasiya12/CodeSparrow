@@ -8,7 +8,7 @@ A developer-focused platform to **practice DSA, store reusable code, and build a
 
 **CodeSparrow** is designed to solve a common problem:
 
-> Developers solve problems but forget patterns and struggle to reuse solutions later.
+> Developers solve problems but forget patterns and struggle to reuse solutions later, and the most important they have to use different platforms for different task
 
 This platform connects learning, storing, and reusing code into a single workflow:
 
@@ -48,7 +48,7 @@ into one unified system focused on **learning retention and reuse**.
 * Buy Study Material
 * Buy Snippets 
 * Reuse it in future problems
-* every thing with your earned points no Money!
+* every thing with your earned points **not real Money!**
 
 ### 👥 Shared Knowledge (Friends Mode)
 
