@@ -4,10 +4,10 @@ import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function LayoutShell() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
-
+  const [menus, setMenus] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,31 +15,48 @@ export default function LayoutShell() {
     try {
       await fetch("http://localhost:8081/api/auth/logout", {
         method: "POST",
-        credentials: "include",  
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
       });
     } catch (error) {
-      console.error("Logout failed : ",error);
-    }finally{
+      console.error("Logout failed : ", error);
+    } finally {
       localStorage.removeItem("accessToken");
       navigate("/login", { replace: true }); // login page
     }
   };
 
-  const navItems = [
-    { label: "Home", icon: "⚡", section: "Main", path: "/dashboard" },
-    { label: "Inventory", icon: "📦", section: "Main", path: "/vault" },
-    { label: "DSA Arena", icon: "⚔️", section: "Main", path: "/arena" },
-    { label: "XP Vault", icon: "🔁", section: "Main", path: "/learning" },
-    { label: "Friends", icon: "👥", section: "Social", path: "/friends" },
-    { label: "Progress", icon: "📊", section: "Social", path: "/progress" },
-    { label: "Settings", icon: "⚙️", section: "Account", path: "/settings" },
-    { label: "Logout", icon: "🚪", section: "Account", action: "logout" },
-  ];
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch("http://localhost:8082/layout/menu", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const sections = [...new Set(navItems.map((n) => n.section))];
+        if (!response.ok) {
+          throw new Error("Failed to fetch menus");
+        }
+
+        const data = await response.json();
+
+        console.log("Menus:", data);
+
+        setMenus(data);
+      } catch (error) {
+        console.error("Menu fetch failed:", error);
+      }
+    };
+
+    fetchMenus();
+  }, []);
+
   const activePath = location.pathname;
 
   useEffect(() => {
@@ -53,8 +70,8 @@ export default function LayoutShell() {
   }, []);
 
   return (
+    
     <div style={styles.wrapper}>
-
       {/* TOPBAR */}
       <header style={styles.topbar}>
         <motion.button
@@ -67,16 +84,20 @@ export default function LayoutShell() {
 
         <div style={styles.brandContainer}>
           <img src={logo} style={styles.logo} />
-          <span style={styles.brand}>CodeSparrow</span>
+          <span onClick={() => navigate("/dashboard")} style={styles.brand}>
+            CodeSparrow
+          </span>
         </div>
 
-        <motion.input
-          placeholder="Search..."
-          style={styles.search}
-        />
+        <div style={styles.searchWrapper}>
+          <i className="bi bi-search" style={styles.searchIcon}></i>
 
+          <motion.input
+            placeholder="Search..."
+            style={styles.search}
+          />
+        </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-
           {/* Notifications */}
           <div ref={notifRef} style={{ position: "relative" }}>
             <motion.div
@@ -113,71 +134,107 @@ export default function LayoutShell() {
 
       {/* BODY */}
       <div style={styles.body}>
-
         {/* SIDEBAR */}
-        <motion.aside
-          animate={{ width: sidebarOpen ? 220 : 72 }}
-          transition={{ duration: 0.25 }}
-          style={styles.sidebar}
+<motion.aside
+  animate={{
+    width: sidebarOpen ? 240 : 72,
+  }}
+  transition={{
+    duration: 0.25,
+    ease: "easeInOut",
+  }}
+  style={styles.sidebar}
+>
+  <div style={styles.sidebarSeparator} />
+
+  <div style={styles.navList}>
+    {menus.map((item) => {
+      const isLogout = item.name === "Logout";
+
+      const active =
+        !isLogout &&
+        (activePath === item.route ||
+          activePath.startsWith(item.route + "/"));
+
+      return (
+        <motion.div
+          key={item.id}
+          title={!sidebarOpen ? item.name : undefined}
+          onClick={() => {
+            if (isLogout) {
+              handleLogout();
+              return;
+            }
+
+            if (item.route) {
+              navigate(item.route);
+            }
+          }}
+          whileHover={{
+            x: 2,
+            backgroundColor: isLogout
+              ? "#FEF2F2"
+              : active
+              ? "#F0EDFF"
+              : "#F8F7FC",
+          }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            ...styles.navItem,
+
+            justifyContent: sidebarOpen
+              ? "flex-start"
+              : "center",
+
+            background: active
+              ? "#F0EDFF"
+              : "transparent",
+
+            color: isLogout
+              ? "#DC2626"
+              : active
+              ? "#534AB7"
+              : "#5F5E5A",
+
+            fontWeight: active ? 600 : 500,
+          }}
         >
-          {sections.map((section) => (
-            <div key={section}>
-              {sidebarOpen && (
-                <div style={styles.sidebarSection}>{section}</div>
-              )}
+          {active && (
+            <motion.div
+              style={styles.activeIndicator}
+            />
+          )}
 
-              {navItems
-                .filter((i) => i.section === section)
-                .map((item) => {
-                  const active = activePath === item.path;
+          <span
+            style={{
+              ...styles.navIcon,
+              color: isLogout
+                ? "#DC2626"
+                : active
+                ? "#534AB7"
+                : "#77736E",
+            }}
+          >
+            <i className={`bi ${item.icon}`}></i>
+          </span>
 
-                  return (
-                    <motion.div
-                      key={item.label}
-                      onClick={() => {
-                        if (item.action === "logout") {
-                          handleLogout();
-                        } else {
-                          navigate(item.path);
-                        }
-                      }}
-                      whileHover={{
-                        scale: 1.03,
-                        x: 3,
-                        backgroundColor: active ? "#EEEDFE" : "#F3F4FF",
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      style={{
-                        ...styles.navItem,
-                        justifyContent: sidebarOpen ? "flex-start" : "center",
-                        background: active ? "#EEEDFE" : "transparent",
-                        color:
-                          item.action === "logout"
-                            ? "#dc2626"
-                            : active
-                            ? "#534AB7"
-                            : "#5F5E5A",
-                      }}
-                    >
-                      <span>{item.icon}</span>
-                    
-                      <AnimatePresence>
-                        {sidebarOpen && (
-                          <motion.span
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -5 }}
-                          >
-                            {item.label}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  );
-                })}
-            </div>
-          ))}
-        </motion.aside>
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.span
+                style={styles.navLabel}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+              >
+                {item.name}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      );
+    })}
+  </div>
+</motion.aside>
 
         {/* MAIN */}
         <main style={styles.main}>
@@ -199,17 +256,16 @@ const styles = {
     background: "#f4f6fb",
   },
 
-topbar: {
-  height: 64,
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  padding: "0 16px",
-  background: "white",
-  borderBottom: "1px solid rgba(0,0,0,0.06)",
-  position: "relative",   // <-- add this
-},
-
+  topbar: {
+    height: 64,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0 16px",
+    background: "white",
+    borderBottom: "1px solid rgba(0,0,0,0.06)",
+    position: "relative",
+  },
 
   toggleBtn: {
     width: 34,
@@ -224,39 +280,106 @@ topbar: {
     display: "flex",
     alignItems: "center",
     gap: 4,
+    cursor:"pointer",
   },
 
   logo: { width: 38, height: 38 },
-  brand: { fontWeight: 600, color: "#534AB7" ,gap:-2},
+  brand: { fontWeight: 600, color: "#534AB7", gap: -2 },
 
-search: {
+  search: {
   position: "absolute",
   left: "50%",
   transform: "translateX(-50%)",
-  width: "clamp(180px, 35vw, 380px)",
+
+  width: "clamp(220px, 30vw, 375px)",
   height: 36,
+
+  padding: "0 14px",
+
   borderRadius: 10,
-  border: "1px solid rgba(0,0,0,0.1)",
-  padding: "0 12px",
-  background: "#F1EFE8",
+  border: "1px solid #DCD9D2",
+
+  background: "#F7F6F2",
+  color: "#333",
+
+  fontSize: 13,
+  fontFamily: "Inter, sans-serif",
+
+  outline: "none",
+
+  boxSizing: "border-box",
+
+  transition: "all 0.2s ease",
+
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
 },
 
+searchWrapper: {
+  position: "absolute",
+  left: "50%",
+  transform: "translateX(-50%)",
 
-iconBtn: {
-  width: 30,
-  height: 30,
-  borderRadius: 12,
+  width: "clamp(220px, 30vw, 375px)",
+  height: 36,
+
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  background: "#f5f5f5",
-  fontSize: 18,
-  lineHeight: 1,
-  userSelect: "none",
+
+  background: "#F7F6F2",
+  border: "1px solid #DCD9D2",
+  borderRadius: 10,
+
+  boxSizing: "border-box",
+
+  transition: "all 0.2s ease",
 },
 
+searchIcon: {
+  marginLeft: 12,
+  color: "#85827B",
+  fontSize: 14,
+  flexShrink: 0,
+},
 
+search: {
+  flex: 1,
+  height: "100%",
+  border: "black",
+  padding: "0 12px 0 8px",
+
+  border: "none",
+  outline: "none",
+  background: "transparent",
+
+  color: "#333",
+  fontSize: 13,
+  fontFamily: "Inter, sans-serif",
+
+  boxSizing: "border-box",
+},
+
+  sidebarSeparator: {
+  position: "absolute",
+  top: 0,
+  right: 0,
+  width: 1,
+  height: "100%",
+  background: "#E5E4EA",
+  pointerEvents: "none",
+},
+  iconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 12,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    background: "#f5f5f5",
+    fontSize: 18,
+    lineHeight: 1,
+    userSelect: "none",
+  },
 
   avatar: {
     width: 32,
@@ -283,39 +406,88 @@ iconBtn: {
   },
 
   body: {
-    display: "flex",
-    flex: 1,
-    overflow: "hidden",
-  },
+  display: "flex",
+  flex: 1,
+  overflow: "hidden",
+  background: "#F4F6FB",
+},
+sidebar: {
+  position: "relative",
+  background: "#FFFFFF",
+  overflow: "hidden",
+  flexShrink: 0,
+  zIndex: 2,
+},
 
-  sidebar: {
-    background: "white",
-    borderRight: "1px solid rgba(0,0,0,0.06)",
-    overflow: "hidden",
-  },
+navList: {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  padding: "20px 10px",
+},
 
-  sidebarSection: {
-    fontSize: 10,
-    textTransform: "uppercase",
-    color: "#A1A1A1",
-    padding: "10px",
-  },
+navItem: {
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  height: 42,
+  padding: "0 12px",
+  cursor: "pointer",
+  fontSize: 13,
+  borderRadius: 9,
+  whiteSpace: "nowrap",
+  transition: "all 0.2s ease",
+  userSelect: "none",
+},
 
-  navItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px",
-    cursor: "pointer",
-    fontSize: 13,
-    borderRadius: 10,
-    margin: "4px 6px",
-    transition: "all 0.2s ease",
-  },
+activeIndicator: {
+  position: "absolute",
+  left: 0,
+  top: "50%",
+  transform: "translateY(-50%)",
+  width: 3,
+  height: 22,
+  borderRadius: "0 4px 4px 0",
+  background: "#534AB7",
+},
+
+navIcon: {
+  display: "flex",
+
+  alignItems: "center",
+
+  justifyContent: "center",
+
+  width: 24,
+
+  height: 24,
+
+  flexShrink: 0,
+
+  fontSize: 18,
+
+  lineHeight: 1,
+
+  transition: "color 0.2s ease",
+},
+
+navLabel: {
+  overflow: "hidden",
+
+  textOverflow: "ellipsis",
+
+  fontSize: 13,
+
+  letterSpacing: "-0.2px",
+
+  whiteSpace: "nowrap",
+},
 
   main: {
-    flex: 1,
-    overflowY: "auto",
-    padding: 20,
-  },
+  flex: 1,
+  overflowY: "auto",
+  padding: "28px 32px",
+  background: "#F4F6FB",
+},
 };

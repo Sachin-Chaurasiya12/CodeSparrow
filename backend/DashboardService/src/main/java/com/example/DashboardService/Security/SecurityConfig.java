@@ -1,8 +1,8 @@
 package com.example.DashboardService.Security;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,64 +15,84 @@ import com.example.DashboardService.Exception.CustomAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // enables @PreAuthorize on controllers
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CustomAuthenticationEntryPoint authEntryPoint;
 
-    public SecurityConfig(JwtFilter jwtFilter,
-                          CustomAccessDeniedHandler accessDeniedHandler,
-                          CustomAuthenticationEntryPoint authEntryPoint) {
+    public SecurityConfig(
+            JwtFilter jwtFilter,
+            CustomAccessDeniedHandler accessDeniedHandler,
+            CustomAuthenticationEntryPoint authEntryPoint) {
+
         this.jwtFilter = jwtFilter;
         this.accessDeniedHandler = accessDeniedHandler;
         this.authEntryPoint = authEntryPoint;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
+
         http
-            // ── No CSRF needed — stateless JWT, no session cookies
+
+            .cors(cors -> {})
+
             .csrf(csrf -> csrf.disable())
 
-            // ── No session — dashboard is fully stateless
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
             )
 
-            // ── No form login / no HTTP Basic — auth service handles all of that
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
 
-            // ── Route protection
             .authorizeHttpRequests(auth -> auth
 
-                // Health check — allow without token (for load balancers, k8s probes)
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/internal/**").permitAll()
+                .requestMatchers(
+                    HttpMethod.OPTIONS,
+                    "/**"
+                ).permitAll()
 
-                // Admin-only routes
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers(
+                    "/actuator/health"
+                ).permitAll()
 
-                // All dashboard and API routes require a valid JWT
+                .requestMatchers(
+                    "/internal/**"
+                ).permitAll()
+
+                .requestMatchers(
+                    "/layout/menu"
+                ).authenticated()
+
                 .requestMatchers(
                     "/dashboard/**",
                     "/api/**"
                 ).authenticated()
 
-                // Lock down everything else by default
                 .anyRequest().authenticated()
             )
 
-            // ── Error handling
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(authEntryPoint) // 401 - no/invalid token
-                .accessDeniedHandler(accessDeniedHandler) // 403 - wrong role
+
+                .authenticationEntryPoint(
+                    authEntryPoint
+                )
+
+                .accessDeniedHandler(
+                    accessDeniedHandler
+                )
             )
 
-            // ── Plug in JWT filter BEFORE Spring's auth filter
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(
+                jwtFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }

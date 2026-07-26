@@ -2,10 +2,13 @@ package com.example.DashboardService.Security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,53 +20,60 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtUtil;
+    @Autowired
+    private JwtService jwtService;
 
-    public JwtFilter(JwtService jwtUtil) {
-        this.jwtUtil = jwtUtil;
+   @Override
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain filterChain)
+        throws ServletException, IOException {
+
+    System.out.println("========== JWT FILTER ==========");
+    System.out.println(request.getRequestURI());
+
+    String authHeader = request.getHeader("Authorization");
+
+    System.out.println("Authorization Header = " + authHeader);
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        System.out.println("No Bearer Token");
+        filterChain.doFilter(request, response);
+        return;
     }
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    String token = authHeader.substring(7);
 
-        String authHeader = request.getHeader("Authorization");
+    try {
 
-        // No token → skip, Spring Security will handle as unauthenticated
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        System.out.println("Token = " + token);
+
+        boolean valid = jwtService.validateToken(token);
+
+        System.out.println("Token valid = " + valid);
+
+        if(valid){
+
+            Long userId = jwtService.extractUserId(token);
+
+            System.out.println("UserId = " + userId);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            System.out.println("Authentication set");
         }
 
-        String token = authHeader.substring(7); // strip "Bearer "
-
-        if (!jwtUtil.isTokenValid(token)) {
-            // Invalid/expired token → reject immediately
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\": \"Invalid or expired token\", \"status\": 401}");
-            return;
-        }
-
-        // Extract identity from token
-        String email = jwtUtil.extractEmail(token);
-        List<String> roles = jwtUtil.extractRoles(token);
-
-        // Map roles to Spring Security authorities — ROLE_ prefix required
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(role -> new SimpleGrantedAuthority(
-                        role.startsWith("ROLE_") ? role : "ROLE_" + role
-                ))
-                .toList();
-
-        // Build authentication object and set in security context
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        filterChain.doFilter(request, response); // continue chain
+    } catch(Exception e){
+        e.printStackTrace();
     }
+
+    filterChain.doFilter(request,response);
+}
 }

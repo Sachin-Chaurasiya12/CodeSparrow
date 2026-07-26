@@ -1,50 +1,108 @@
 package com.example.DashboardService.service;
-import io.jsonwebtoken.*;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.security.Key;
-import java.util.Base64;
+import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.List;
+import java.util.function.Function;
 
-@Component
+@Service
 public class JwtService {
 
     @Value("${jwt.secret}")
     private String secret;
 
-    private Key getSigningKey() {
-        byte[] keyBytes = Base64.getDecoder().decode(secret);
+    private SecretKey getSigningKey() {
+
+        byte[] keyBytes =
+                Decoders.BASE64.decode(secret);
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // Validate and parse all claims from token
-    public Claims extractAllClaims(String token) {
+    public String extractUsername(String token) {
+
+        return extractClaim(
+                token,
+                Claims::getSubject
+        );
+    }
+
+    public Long extractUserId(String token) {
+
+        return extractAllClaims(token)
+                .get("userId", Long.class);
+    }
+
+    public Date extractExpiration(String token) {
+
+        return extractClaim(
+                token,
+                Claims::getExpiration
+        );
+    }
+
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> resolver) {
+
+        Claims claims =
+                extractAllClaims(token);
+
+        return resolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(
+            String token) {
+
         return Jwts.parser()
-                .verifyWith((javax.crypto.SecretKey) getSigningKey())
+
+                .verifyWith(
+                        getSigningKey()
+                )
+
                 .build()
+
                 .parseSignedClaims(token)
+
                 .getPayload();
     }
 
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
+
+    public boolean isTokenExpired(
+            String token) {
+
+        return extractExpiration(token)
+                .before(new Date());
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> extractRoles(String token) {
-        // Roles must be stored in JWT claims by your auth service
-        return (List<String>) extractAllClaims(token).get("role");
-    }
 
-    public boolean isTokenValid(String token) {
+    public boolean validateToken(
+            String token) {
+
         try {
-            Claims claims = extractAllClaims(token);
-            return !claims.getExpiration().before(new Date()); // not expired
-        } catch (JwtException | IllegalArgumentException e) {
-            return false; // tampered, malformed, or expired
+
+            Claims claims =
+                    extractAllClaims(token);
+
+            return claims.getExpiration() == null
+                    || claims.getExpiration()
+                             .after(new Date());
+
+        } catch (Exception e) {
+
+            System.out.println(
+                "JWT validation failed: "
+                + e.getMessage()
+            );
+
+            return false;
         }
     }
 }
