@@ -6,6 +6,8 @@
   import Profile from "./Internals/profile";
   // import Profilesetting from "./Internals/profilesetting";
   import MainLayout from "./Layout/Layout";
+  import InventoryPage from "./Inventory/InventoryPage";
+  import NewSnippetPage from "./Inventory/new";
 
   
   function PublicRoute({ children }) {
@@ -32,7 +34,8 @@
         >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/internal/profile" element={<Profile />} />
-
+        <Route path="/Inventory" element={<InventoryPage />} />
+        <Route path="/new" element={<NewSnippetPage />} />
         {/* <Route 
           path="/internal/profilesetting"
           element={
