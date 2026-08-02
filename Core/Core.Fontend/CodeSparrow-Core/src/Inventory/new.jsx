@@ -1,22 +1,100 @@
-import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { FILE_CONFIG } from "./fileTypeConfig";
+
+const REQUEST_TIMEOUT = 30000;
 
 function NewSnippetPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [title, setTitle] = useState("");
-  const [hoveredBtn, setHoveredBtn] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const fileInputRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  // -----------------------------
-  // Button style
-  // -----------------------------
-  const gradientBtn = (key) => ({
+  const isValidId = useCallback((id) => {
+    return /^[a-zA-Z0-9_-]+$/.test(id) && id.length <= 100;
+  }, []);
+
+  useEffect(() => {
+    const snippetId = searchParams.get("id");
+
+    if (snippetId) {
+      if (!isValidId(snippetId)) {
+        setError("Invalid snippet ID");
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setIsEditMode(true);
+      setEditId(snippetId);
+
+      abortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(
+        () => abortControllerRef.current?.abort(),
+        REQUEST_TIMEOUT
+      );
+
+      fetch(`/api/snippets/${encodeURIComponent(snippetId)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: abortControllerRef.current.signal,
+      })
+        .then((res) => {
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            throw new Error(
+              `Failed to load snippet: ${res.status} ${res.statusText}`
+            );
+          }
+
+          return res.json();
+        })
+        .then((data) => {
+          if (!data.title || typeof data.title !== "string") {
+            throw new Error("Invalid snippet data received");
+          }
+
+          setTitle(data.title);
+          setContent(data.content || "");
+          setAttachments(Array.isArray(data.attachments) ? data.attachments : []);
+          setError(null);
+          setLoading(false);
+        })
+        .catch((err) => {
+          clearTimeout(timeoutId);
+
+          if (err.name === "AbortError") {
+            setError("Request timeout. Please try again.");
+          } else {
+            console.error("Failed to load snippet:", err);
+            setError(err.message || "Failed to load snippet. Please try again.");
+          }
+
+          setLoading(false);
+        });
+
+      return () => {
+        abortControllerRef.current?.abort();
+      };
+    }
+  }, [searchParams, isValidId]);
+
+  const gradientBtn = {
     background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
     color: "white",
     border: "none",
@@ -29,28 +107,58 @@ function NewSnippetPage() {
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-
-    transform:
-      hoveredBtn === key
-        ? "translateY(-2px)"
-        : "translateY(0)",
-
-    boxShadow:
-      hoveredBtn === key
-        ? "0 8px 18px rgba(123, 79, 219, 0.35)"
-        : "0 4px 10px rgba(123, 79, 219, 0.2)",
-
-    transition:
-      "transform 0.25s ease, box-shadow 0.25s ease",
-
+    transition: "transform 0.25s ease, box-shadow 0.25s ease",
     fontFamily: "'Inter', sans-serif",
-  });
+  };
 
-  // -----------------------------
-  // Upload
-  // -----------------------------
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const extractTextFromFile = async (file) => {
+    try {
+      if (FILE_CONFIG.isTextFile(file)) {
+        const text = await file.text();
+        setContent((prev) => (prev ? prev + "\n\n" + text : text));
+        return true;
+      }
+
+      if (FILE_CONFIG.isDocxFile(file)) {
+        try {
+          const { default: JSZip } = await import("jszip");
+          const zip = new JSZip();
+          const zipContent = await zip.loadAsync(file);
+          const xmlFile = zipContent.file("word/document.xml");
+
+          if (xmlFile) {
+            const xmlText = await xmlFile.async("string");
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const textElements = xmlDoc.getElementsByTagName("w:t");
+            let extractedText = "";
+
+            for (let i = 0; i < textElements.length; i++) {
+              extractedText += textElements[i].textContent;
+            }
+
+            if (extractedText) {
+              setContent((prev) => (prev ? prev + "\n\n" + extractedText : extractedText));
+              return true;
+            }
+          }
+        } catch (docxError) {
+          console.error("Failed to extract DOCX text:", docxError);
+          setError("Could not extract text from DOCX file");
+          return false;
+        }
+      }
+
+      return false;
+    } catch (err) {
+      console.error("Error extracting text:", err);
+      setError(`Failed to extract text from ${file.name}`);
+      return false;
+    }
   };
 
   const handleFileChange = (e) => {
@@ -59,28 +167,70 @@ function NewSnippetPage() {
     if (!files) return;
 
     const next = [];
+    const errors = [];
+    const textExtractionPromises = [];
+
+    if (attachments.length >= FILE_CONFIG.MAX_ATTACHMENTS) {
+      errors.push(`Maximum ${FILE_CONFIG.MAX_ATTACHMENTS} attachments allowed`);
+    }
 
     Array.from(files).forEach((file) => {
+      if (file.size > FILE_CONFIG.MAX_FILE_SIZE) {
+        errors.push(`${file.name}: File size exceeds 10MB limit`);
+        return;
+      }
+
+      if (FILE_CONFIG.isTextFile(file) || FILE_CONFIG.isDocxFile(file)) {
+        textExtractionPromises.push(extractTextFromFile(file));
+        return;
+      }
+
+      if (!FILE_CONFIG.isAllowedAttachment(file)) {
+        errors.push(
+          `${file.name}: File type not supported. Supported: ${FILE_CONFIG.getSupportedFormats()}`
+        );
+        return;
+      }
+
       const url = URL.createObjectURL(file);
 
       next.push({
-        id: `${Date.now()}-${file.name}`,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         type: file.type,
         url,
+        size: file.size,
         isImage: file.type.startsWith("image/"),
       });
     });
 
-    setAttachments((prev) => [...prev, ...next]);
+    if (errors.length > 0) {
+      setError(errors.join("\n"));
+      return;
+    }
 
-    // Allow selecting same file again
+    if (next.length + attachments.length > FILE_CONFIG.MAX_ATTACHMENTS) {
+      setError(
+        `Cannot add more than ${FILE_CONFIG.MAX_ATTACHMENTS} attachments total`
+      );
+      return;
+    }
+
+    Promise.all(textExtractionPromises).then(() => {
+      setAttachments((prev) => {
+        if (prev.length + next.length > FILE_CONFIG.MAX_ATTACHMENTS) {
+          setError(`Maximum ${FILE_CONFIG.MAX_ATTACHMENTS} attachments allowed`);
+          return prev;
+        }
+        return [...prev, ...next];
+      });
+
+      setError(null);
+    });
+
     e.target.value = "";
   };
 
-  // -----------------------------
-  // Remove attachment
-  // -----------------------------
   const removeAttachment = (id) => {
     setAttachments((prev) => {
       const target = prev.find((a) => a.id === id);
@@ -93,99 +243,227 @@ function NewSnippetPage() {
     });
   };
 
-  // -----------------------------
-  // Download
-  // -----------------------------
-  const downloadAs = (format) => {
-    const safeTitle = (title || "untitled")
-      .replace(/[^a-z0-9-_]+/gi, "_");
+  const downloadAs = async () => {
+    const hasImages = attachments.some((a) => a.isImage);
 
-    if (format === "txt") {
-      const blob = new Blob(
-        [content],
-        {
-          type: "text/plain;charset=utf-8",
-        }
-      );
-
-      triggerDownload(
-        blob,
-        `${safeTitle}.txt`
-      );
-    } else {
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${safeTitle}</title>
-        </head>
-        <body>
-          <pre style="
-            font-family: Inter, sans-serif;
-            white-space: pre-wrap;
-          ">${escapeHtml(content)}</pre>
-        </body>
-        </html>
-      `;
-
-      const blob = new Blob(
-        [html],
-        {
-          type: "application/msword",
-        }
-      );
-
-      triggerDownload(
-        blob,
-        `${safeTitle}.doc`
-      );
+    if (hasImages) {
+      setError("Cannot download when images are attached. Please remove images first.");
+      return;
     }
 
-    setShowDownloadMenu(false);
+    try {
+      const safeTitle = (title || "untitled")
+        .replace(/[^a-z0-9-_]+/gi, "_");
+
+      const blob = new Blob([content], {
+        type: "text/plain;charset=utf-8",
+      });
+
+      triggerDownload(blob, `${safeTitle}.txt`);
+    } catch (err) {
+      console.error("Download error:", err);
+      setError("Failed to download file. Please try again.");
+    }
   };
 
   const triggerDownload = (blob, filename) => {
     const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-    const a = document.createElement("a");
+    link.href = url;
+    link.download = filename;
 
-    a.href = url;
-    a.download = filename;
+    document.body.appendChild(link);
+    link.click();
 
-    document.body.appendChild(a);
-
-    a.click();
-
-    document.body.removeChild(a);
-
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
 
-  const escapeHtml = (s) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+  const validateSnippet = useCallback(() => {
+    const trimmedTitle = title.trim();
 
-  // -----------------------------
-  // Save
-  // -----------------------------
-  const handleConfirmSave = () => {
-    if (!title.trim()) return;
+    if (!trimmedTitle) {
+      setError("Title is required");
+      return null;
+    }
 
-    // Later you can send:
-    // title
-    // content
-    // attachments
-    // to your backend here.
+    if (trimmedTitle.length > 255) {
+      setError("Title must be less than 255 characters");
+      return null;
+    }
 
-    setShowSaveModal(false);
-    setTitle("");
+    if (content.length > 100000) {
+      setError("Content must be less than 100,000 characters");
+      return null;
+    }
 
-    // React Router DOM syntax
-    navigate("/Inventory");
-  };
+    return {
+      title: trimmedTitle,
+      content: content.trim(),
+      attachments: attachments.map(({ id, name, type, size, isImage }) => ({
+        id,
+        name,
+        type,
+        size,
+        isImage,
+      })),
+    };
+  }, [title, content, attachments]);
+
+  const handleConfirmSave = useCallback(async () => {
+    const snippetData = validateSnippet();
+
+    if (!snippetData) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    abortControllerRef.current = new AbortController();
+    const timeoutId = setTimeout(
+      () => abortControllerRef.current?.abort(),
+      REQUEST_TIMEOUT
+    );
+
+    try {
+      const url = isEditMode && editId
+        ? `/api/snippets/${encodeURIComponent(editId)}`
+        : "/api/snippets";
+
+      const method = isEditMode && editId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(snippetData),
+        signal: abortControllerRef.current.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to save snippet: ${response.status}`
+        );
+      }
+
+      await response.json();
+
+      setShowSaveModal(false);
+      setTitle("");
+      setContent("");
+      setAttachments([]);
+      setIsEditMode(false);
+      setEditId(null);
+      setError(null);
+
+      navigate("/Inventory");
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      if (err.name === "AbortError") {
+        setError("Request timeout. Please try again.");
+      } else {
+        console.error("Error saving snippet:", err);
+        setError(err.message || "Failed to save snippet. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [validateSnippet, isEditMode, editId, navigate]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "18px",
+            fontWeight: "600",
+            color: "#1a1a1a",
+          }}
+        >
+          Loading snippet...
+        </div>
+      </div>
+    );
+  }
+
+  if (error && isEditMode) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#ffffff",
+          padding: "2.5rem 3rem",
+          fontFamily: "'Inter', sans-serif",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "500px",
+            background: "#fff5f5",
+            border: "1px solid #feb2b2",
+            borderRadius: "12px",
+            padding: "24px",
+            textAlign: "center",
+          }}
+        >
+          <h2
+            style={{
+              color: "#c53030",
+              margin: "0 0 12px",
+              fontSize: "20px",
+            }}
+          >
+            Error Loading Snippet
+          </h2>
+          <p
+            style={{
+              color: "#742a2a",
+              margin: "0 0 20px",
+              fontSize: "14px",
+            }}
+          >
+            {error}
+          </p>
+          <button
+            onClick={() => navigate("/Inventory")}
+            style={{
+              padding: "10px 24px",
+              borderRadius: "30px",
+              border: "none",
+              background: "#c53030",
+              color: "white",
+              fontWeight: "700",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Back to Inventory
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -204,9 +482,38 @@ function NewSnippetPage() {
         }}
       >
 
-        {/* ========================= */}
-        {/* Header */}
-        {/* ========================= */}
+        {error && (
+          <div
+            style={{
+              marginBottom: "1.5rem",
+              background: "#fff5f5",
+              border: "1px solid #feb2b2",
+              borderRadius: "8px",
+              padding: "12px 16px",
+              color: "#c53030",
+              fontSize: "14px",
+              fontWeight: "500",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#c53030",
+                cursor: "pointer",
+                fontSize: "18px",
+                padding: "0",
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         <div
           style={{
@@ -246,7 +553,6 @@ function NewSnippetPage() {
             </h1>
           </div>
 
-          {/* Back button */}
           <button
             onClick={() => navigate("/Inventory")}
             aria-label="Back to inventory"
@@ -263,11 +569,6 @@ function NewSnippetPage() {
           </button>
         </div>
 
-
-        {/* ========================= */}
-        {/* Main Card */}
-        {/* ========================= */}
-
         <div
           style={{
             border: "1px solid #cfcfcf",
@@ -276,10 +577,6 @@ function NewSnippetPage() {
             backgroundColor: "#fdfdfd",
           }}
         >
-
-          {/* ========================= */}
-          {/* Card Header */}
-          {/* ========================= */}
 
           <div
             style={{
@@ -317,12 +614,9 @@ function NewSnippetPage() {
                   color: "#1a1a1a",
                 }}
               >
-                Create New
+                {isEditMode ? "Edit Snippet" : "Create New"}
               </h2>
             </div>
-
-
-            {/* Action buttons */}
 
             <div
               style={{
@@ -332,92 +626,21 @@ function NewSnippetPage() {
               }}
             >
 
-              {/* Upload */}
-
               <button
                 onClick={handleUploadClick}
-                onMouseEnter={() =>
-                  setHoveredBtn("upload")
-                }
-                onMouseLeave={() =>
-                  setHoveredBtn(null)
-                }
-                style={gradientBtn("upload")}
+                style={gradientBtn}
               >
                 <i className="bi bi-plus-lg" />
                 Upload
               </button>
 
-
-              {/* Download */}
-
-              <div
-                style={{
-                  position: "relative",
-                }}
+              <button
+                onClick={downloadAs}
+                style={gradientBtn}
               >
-                <button
-                  onClick={() =>
-                    setShowDownloadMenu(
-                      (s) => !s
-                    )
-                  }
-                  onMouseEnter={() =>
-                    setHoveredBtn("download")
-                  }
-                  onMouseLeave={() =>
-                    setHoveredBtn(null)
-                  }
-                  style={gradientBtn("download")}
-                >
-                  <i className="bi bi-download" />
-                  Download
-                </button>
-
-
-                {/* Download menu */}
-
-                {showDownloadMenu && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "calc(100% + 8px)",
-                      right: 0,
-                      background: "white",
-                      border: "1px solid #e5e5e5",
-                      borderRadius: "12px",
-                      boxShadow:
-                        "0 8px 24px rgba(0,0,0,0.08)",
-                      overflow: "hidden",
-                      zIndex: 10,
-                      minWidth: "160px",
-                    }}
-                  >
-
-                    <button
-                      onClick={() =>
-                        downloadAs("txt")
-                      }
-                      style={menuItemStyle}
-                    >
-                      As .txt
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        downloadAs("doc")
-                      }
-                      style={menuItemStyle}
-                    >
-                      As .doc
-                    </button>
-
-                  </div>
-                )}
-              </div>
-
-
-              {/* Hidden file input */}
+                <i className="bi bi-download" />
+                Download
+              </button>
 
               <input
                 ref={fileInputRef}
@@ -431,11 +654,6 @@ function NewSnippetPage() {
 
             </div>
           </div>
-
-
-          {/* ========================= */}
-          {/* Workspace */}
-          {/* ========================= */}
 
           <div
             style={{
@@ -489,11 +707,6 @@ function NewSnippetPage() {
 
             </div>
 
-
-            {/* ========================= */}
-            {/* Attachments */}
-            {/* ========================= */}
-
             {attachments.length > 0 && (
 
               <div
@@ -527,12 +740,25 @@ function NewSnippetPage() {
                       <img
                         src={a.url}
                         alt={a.name}
+                        onClick={() =>
+                          setPreviewImage(a)
+                        }
                         style={{
                           width: "60px",
                           height: "60px",
                           objectFit: "cover",
                           borderRadius: "8px",
+                          cursor: "pointer",
+                          transition: "transform 0.2s ease",
                         }}
+                        onMouseEnter={(e) =>
+                          e.target.style.transform =
+                            "scale(1.05)"
+                        }
+                        onMouseLeave={(e) =>
+                          e.target.style.transform =
+                            "scale(1)"
+                        }
                       />
 
                     ) : (
@@ -559,7 +785,6 @@ function NewSnippetPage() {
                       </div>
 
                     )}
-
 
                     <div
                       style={{
@@ -613,11 +838,6 @@ function NewSnippetPage() {
 
           </div>
 
-
-          {/* ========================= */}
-          {/* Save Button */}
-          {/* ========================= */}
-
           <div
             style={{
               marginTop: "24px",
@@ -630,20 +850,17 @@ function NewSnippetPage() {
               onClick={() =>
                 setShowSaveModal(true)
               }
-              onMouseEnter={() =>
-                setHoveredBtn("save")
-              }
-              onMouseLeave={() =>
-                setHoveredBtn(null)
-              }
+              disabled={saving}
               style={{
-                ...gradientBtn("save"),
+                ...gradientBtn,
                 padding: "12px 36px",
                 fontSize: "17px",
                 fontWeight: "800",
+                opacity: saving ? 0.6 : 1,
+                cursor: saving ? "not-allowed" : "pointer",
               }}
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
 
           </div>
@@ -651,11 +868,6 @@ function NewSnippetPage() {
         </div>
 
       </div>
-
-
-      {/* ========================= */}
-      {/* Save Modal */}
-      {/* ========================= */}
 
       {showSaveModal && (
 
@@ -775,29 +987,19 @@ function NewSnippetPage() {
 
               <button
                 onClick={handleConfirmSave}
-                disabled={!title.trim()}
+                disabled={!title.trim() || saving}
                 style={{
-                  ...gradientBtn(
-                    "modalSave"
-                  ),
+                  ...gradientBtn,
                   padding: "10px 26px",
                   opacity:
-                    title.trim() ? 1 : 0.6,
+                    (title.trim() && !saving) ? 1 : 0.6,
                   cursor:
-                    title.trim()
+                    (title.trim() && !saving)
                       ? "pointer"
                       : "not-allowed",
                 }}
-                onMouseEnter={() =>
-                  setHoveredBtn(
-                    "modalSave"
-                  )
-                }
-                onMouseLeave={() =>
-                  setHoveredBtn(null)
-                }
               >
-                Save
+                {saving ? "Saving..." : "Save"}
               </button>
 
             </div>
@@ -808,24 +1010,97 @@ function NewSnippetPage() {
 
       )}
 
+      {previewImage && (
+
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() =>
+            setPreviewImage(null)
+          }
+          style={{
+            position: "fixed",
+            inset: 0,
+            background:
+              "rgba(15, 15, 25, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: "16px",
+          }}
+        >
+
+          <div
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+            style={{
+              position: "relative",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow:
+                "0 25px 50px rgba(0,0,0,0.3)",
+            }}
+          >
+
+            <img
+              src={previewImage.url}
+              alt={previewImage.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+
+            <button
+              onClick={() =>
+                setPreviewImage(null)
+              }
+              aria-label="Close preview"
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                background:
+                  "rgba(0,0,0,0.6)",
+                border: "none",
+                color: "white",
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "20px",
+                transition:
+                  "background 0.2s ease",
+              }}
+              onMouseEnter={(e) =>
+                e.target.style.background =
+                  "rgba(0,0,0,0.8)"
+              }
+              onMouseLeave={(e) =>
+                e.target.style.background =
+                  "rgba(0,0,0,0.6)"
+              }
+            >
+              <i className="bi bi-x-lg" />
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   );
 }
-
-
-const menuItemStyle = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  padding: "10px 14px",
-  background: "white",
-  border: "none",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#1a1a1a",
-  fontFamily: "'Inter', sans-serif",
-};
-
 
 export default NewSnippetPage;
