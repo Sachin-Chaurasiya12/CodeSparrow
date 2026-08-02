@@ -1,201 +1,194 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+CODESPARROW PROPRIETARY SOFTWARE LICENSE
+ALL RIGHTS RESERVED
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+Copyright (c) 2026 Sachin Mahesh Chauraisya
 
-   1. Definitions.
+Project: CodeSparrow
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+1. OWNERSHIP
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+CodeSparrow, including its original source code, object code, documentation,
+software architecture, designs, user interfaces, graphics, database
+structures, configuration, and other original materials, is the intellectual
+property of [YOUR FULL NAME OR COMPANY NAME] ("Copyright Holder"), except
+for third-party software and materials that are separately licensed.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+All rights not expressly granted under this License are reserved.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+2. SOURCE CODE AVAILABILITY
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+The CodeSparrow source code may be publicly accessible through GitHub or
+other public source-code hosting platforms.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+Public access to the source code does not grant any ownership rights or
+permission to use CodeSparrow as an independent product.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+The source code is made available primarily for transparency, review,
+learning, bug reporting, development, and community contribution.
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+3. PERMITTED CONTRIBUTION
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+Individuals may contribute to CodeSparrow through the project's official
+contribution channels, including GitHub Issues and Pull Requests.
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+Permitted contribution activities include:
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+- Reporting bugs.
+- Suggesting improvements.
+- Submitting bug fixes.
+- Submitting new features.
+- Submitting documentation improvements.
+- Submitting tests.
+- Submitting code improvements.
+- Reviewing Pull Requests.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+All contributions are subject to the project's CONTRIBUTING.md guidelines
+and any applicable Contributor License Agreement.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+4. CONTRIBUTION DOES NOT GRANT REUSE RIGHTS
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+Contributing to CodeSparrow does not grant permission to:
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+- Copy the CodeSparrow project for another project.
+- Create and distribute a competing project based substantially on
+  CodeSparrow.
+- Rebrand CodeSparrow as another product.
+- Sell CodeSparrow or a substantially modified version.
+- Redistribute CodeSparrow source code.
+- Use substantial portions of CodeSparrow in another software product.
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+Any such use requires prior written permission from the Copyright Holder.
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+5. RESTRICTIONS
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+Without prior written permission from the Copyright Holder, you may not:
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+a. Reproduce substantial portions of the CodeSparrow source code.
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+b. Create derivative works based substantially on CodeSparrow for
+   distribution outside the official CodeSparrow project.
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+c. Redistribute or republish CodeSparrow or substantial portions of its
+   source code.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+d. Sell, sublicense, lease, rent, or commercially exploit CodeSparrow.
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
+e. Use CodeSparrow as the basis for a competing product or service.
 
-   END OF TERMS AND CONDITIONS
+f. Rebrand or represent CodeSparrow as your own software.
 
-   APPENDIX: How to apply the Apache License to your work.
+g. Remove copyright or proprietary notices.
 
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
+h. Use substantial portions of CodeSparrow in another public or commercial
+   software project.
 
-   Copyright 2026 Sachin Chauraisya
+6. FORKING
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+The CodeSparrow repository may be forked on GitHub for the purpose of
+contributing changes back to the official CodeSparrow project.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+A fork or copy may not be publicly distributed, commercially exploited,
+rebranded, or operated as an independent competing project without prior
+written permission from the Copyright Holder.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+7. CONTRIBUTIONS
+
+Contributions submitted through the official CodeSparrow project may be
+reviewed, modified, rejected, or incorporated at the sole discretion of
+the project maintainers.
+
+Submitting a Pull Request does not guarantee acceptance.
+
+Any contribution accepted into the official CodeSparrow project shall be
+used according to the terms of the applicable Contributor License Agreement
+or other written contribution agreement.
+
+8. THIRD-PARTY SOFTWARE
+
+CodeSparrow may include or depend upon third-party libraries, frameworks,
+tools, and software.
+
+Third-party software is not covered by this License where its own license
+terms apply.
+
+All third-party software remains subject to its respective license.
+
+Nothing in this License overrides rights granted under the applicable
+licenses of third-party software.
+
+9. TRADEMARKS
+
+The CodeSparrow name, logo, branding, trademarks, and service marks may not
+be used to represent another product or service without prior written
+permission.
+
+Contributing to CodeSparrow does not grant permission to use the CodeSparrow
+brand for another project.
+
+10. COMMERCIAL USE
+
+Commercial use of CodeSparrow or substantial portions of its original source
+code is prohibited without prior written permission from the Copyright
+Holder.
+
+Commercial use includes, but is not limited to:
+
+- Selling the software.
+- Selling modified versions.
+- Offering the software as a commercial service.
+- Rebranding the software as a commercial product.
+- Using substantial portions of the software in a commercial product.
+
+11. NO TRANSFER OF OWNERSHIP
+
+Nothing in this License transfers ownership or intellectual property rights
+in CodeSparrow to any contributor, user, or third party.
+
+12. COPYRIGHT
+
+Copyright (c) 2026 Sachin Mahesh Chaurasiya
+
+All Rights Reserved.
+
+13. DISCLAIMER
+
+CodeSparrow is provided "AS IS" and without warranties of any kind, to the
+maximum extent permitted by applicable law.
+
+14. LIMITATION OF LIABILITY
+
+To the maximum extent permitted by applicable law, the Copyright Holder
+shall not be liable for damages arising from the use or inability to use
+CodeSparrow.
+
+15. LICENSE CHANGES
+
+The Copyright Holder may release future versions of CodeSparrow under
+different license terms.
+
+Changes to future versions do not automatically revoke rights lawfully
+granted under previous versions.
+
+16. GOVERNING LAW
+
+This License shall be governed by the laws applicable in
+Maharashtra, INDIA.
+
+Any disputes shall be subject to the jurisdiction of the competent courts
+of Mumbai, Maharashtra, INDIA, to the extent permitted by applicable law.
+
+17. CONTACT
+
+For licensing requests, commercial use, permissions, or other inquiries:
+
+Name: Sachin Chauraisya
+Email: sachinchau444@gmail.com
+
+18. FINAL NOTICE
+
+CodeSparrow is proprietary software.
+
+Public availability of the source code does not grant permission to use
+CodeSparrow as another person's or organization's own project.
+
+All rights not expressly granted under this License are reserved.
