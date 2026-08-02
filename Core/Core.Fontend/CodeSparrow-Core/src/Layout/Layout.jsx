@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function LayoutShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [avatar, setavatar] = useState(null);
   const notifRef = useRef(null);
   const [menus, setMenus] = useState([]);
   const navigate = useNavigate();
@@ -27,6 +28,32 @@ export default function LayoutShell() {
       navigate("/login", { replace: true }); // login page
     }
   };
+
+  useEffect(() => {
+    const handleavatar = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("http://localhost:8083/profile", {
+        method:'GET',
+        credentials:'include',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+      });
+      if(!response.ok){
+        console.log("failed to fetch response");
+      }
+
+      const data = await response.json();
+
+      setavatar(data.avatarSecureUrl);
+      
+    } catch (error) {
+      console.error("avartar failed to fetch", error);
+    }
+  };
+  handleavatar();
+  }, []);
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -121,13 +148,25 @@ export default function LayoutShell() {
               )}
             </AnimatePresence>
           </div>
-
           <motion.div
             whileHover={{ scale: 1.1 }}
             onClick={() => navigate("/internal/profile")}
             style={styles.avatar}
           >
-            U
+            {avatar ? (
+              <img
+                src={avatar}
+                alt="Profile Avatar"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              "U"
+            )}
           </motion.div>
         </div>
       </header>

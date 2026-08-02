@@ -8,6 +8,7 @@ volumes:
   auth-target:
   dashboard-target:
   profile-target:
+  inventory-target:
 
 services:
   auth-service:
@@ -66,6 +67,25 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - codesparrow-net
+
+  inventory-service:
+    build:
+      context: ./backend/InventoryService
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./backend/InventoryService:/app
+      - inventory-target:/app/target
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - codesparrow-net
     
   service-registry:
     build:
@@ -109,5 +129,6 @@ services:
       - auth-service
       - dashboard-service
       - profile-service
+      - inventory-service
     networks:
       - codesparrow-net
