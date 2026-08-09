@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in CodeSparrow
+about: Report a bug in CodeCabinate
 title: "[BUG] "
 labels: bug
 assignees: ""
