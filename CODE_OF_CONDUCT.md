@@ -3,7 +3,7 @@
 
 ## Our Commitment
 
-We want CodeSparrow to be a respectful and constructive environment for
+We want CodeCabinate to be a respectful and constructive environment for
 everyone who participates in the project.
 
 ## Expected Behavior
