@@ -1,13 +1,13 @@
-CODESPARROW PROPRIETARY SOFTWARE LICENSE
+CodeCabinate PROPRIETARY SOFTWARE LICENSE
 ALL RIGHTS RESERVED
 
 Copyright (c) 2026 Sachin Mahesh Chauraisya
 
-Project: CodeSparrow
+Project: CodeCabinate
 
 1. OWNERSHIP
 
-CodeSparrow, including its original source code, object code, documentation,
+CodeCabinate, including its original source code, object code, documentation,
 software architecture, designs, user interfaces, graphics, database
 structures, configuration, and other original materials, is the intellectual
 property of [YOUR FULL NAME OR COMPANY NAME] ("Copyright Holder"), except
@@ -17,18 +17,18 @@ All rights not expressly granted under this License are reserved.
 
 2. SOURCE CODE AVAILABILITY
 
-The CodeSparrow source code may be publicly accessible through GitHub or
+The CodeCabinate source code may be publicly accessible through GitHub or
 other public source-code hosting platforms.
 
 Public access to the source code does not grant any ownership rights or
-permission to use CodeSparrow as an independent product.
+permission to use CodeCabinate as an independent product.
 
 The source code is made available primarily for transparency, review,
 learning, bug reporting, development, and community contribution.
 
 3. PERMITTED CONTRIBUTION
 
-Individuals may contribute to CodeSparrow through the project's official
+Individuals may contribute to CodeCabinate through the project's official
 contribution channels, including GitHub Issues and Pull Requests.
 
 Permitted contribution activities include:
@@ -47,15 +47,15 @@ and any applicable Contributor License Agreement.
 
 4. CONTRIBUTION DOES NOT GRANT REUSE RIGHTS
 
-Contributing to CodeSparrow does not grant permission to:
+Contributing to CodeCabinate does not grant permission to:
 
-- Copy the CodeSparrow project for another project.
+- Copy the CodeCabinate project for another project.
 - Create and distribute a competing project based substantially on
-  CodeSparrow.
-- Rebrand CodeSparrow as another product.
-- Sell CodeSparrow or a substantially modified version.
-- Redistribute CodeSparrow source code.
-- Use substantial portions of CodeSparrow in another software product.
+  CodeCabinate.
+- Rebrand CodeCabinate as another product.
+- Sell CodeCabinate or a substantially modified version.
+- Redistribute CodeCabinate source code.
+- Use substantial portions of CodeCabinate in another software product.
 
 Any such use requires prior written permission from the Copyright Holder.
 
@@ -63,29 +63,29 @@ Any such use requires prior written permission from the Copyright Holder.
 
 Without prior written permission from the Copyright Holder, you may not:
 
-a. Reproduce substantial portions of the CodeSparrow source code.
+a. Reproduce substantial portions of the CodeCabinate source code.
 
-b. Create derivative works based substantially on CodeSparrow for
-   distribution outside the official CodeSparrow project.
+b. Create derivative works based substantially on CodeCabinate for
+   distribution outside the official CodeCabinate project.
 
-c. Redistribute or republish CodeSparrow or substantial portions of its
+c. Redistribute or republish CodeCabinate or substantial portions of its
    source code.
 
-d. Sell, sublicense, lease, rent, or commercially exploit CodeSparrow.
+d. Sell, sublicense, lease, rent, or commercially exploit CodeCabinate.
 
-e. Use CodeSparrow as the basis for a competing product or service.
+e. Use CodeCabinate as the basis for a competing product or service.
 
-f. Rebrand or represent CodeSparrow as your own software.
+f. Rebrand or represent CodeCabinate as your own software.
 
 g. Remove copyright or proprietary notices.
 
-h. Use substantial portions of CodeSparrow in another public or commercial
+h. Use substantial portions of CodeCabinate in another public or commercial
    software project.
 
 6. FORKING
 
-The CodeSparrow repository may be forked on GitHub for the purpose of
-contributing changes back to the official CodeSparrow project.
+The CodeCabinate repository may be forked on GitHub for the purpose of
+contributing changes back to the official CodeCabinate project.
 
 A fork or copy may not be publicly distributed, commercially exploited,
 rebranded, or operated as an independent competing project without prior
@@ -93,19 +93,19 @@ written permission from the Copyright Holder.
 
 7. CONTRIBUTIONS
 
-Contributions submitted through the official CodeSparrow project may be
+Contributions submitted through the official CodeCabinate project may be
 reviewed, modified, rejected, or incorporated at the sole discretion of
 the project maintainers.
 
 Submitting a Pull Request does not guarantee acceptance.
 
-Any contribution accepted into the official CodeSparrow project shall be
+Any contribution accepted into the official CodeCabinate project shall be
 used according to the terms of the applicable Contributor License Agreement
 or other written contribution agreement.
 
 8. THIRD-PARTY SOFTWARE
 
-CodeSparrow may include or depend upon third-party libraries, frameworks,
+CodeCabinate may include or depend upon third-party libraries, frameworks,
 tools, and software.
 
 Third-party software is not covered by this License where its own license
@@ -118,16 +118,16 @@ licenses of third-party software.
 
 9. TRADEMARKS
 
-The CodeSparrow name, logo, branding, trademarks, and service marks may not
+The CodeCabinate name, logo, branding, trademarks, and service marks may not
 be used to represent another product or service without prior written
 permission.
 
-Contributing to CodeSparrow does not grant permission to use the CodeSparrow
+Contributing to CodeCabinate does not grant permission to use the CodeCabinate
 brand for another project.
 
 10. COMMERCIAL USE
 
-Commercial use of CodeSparrow or substantial portions of its original source
+Commercial use of CodeCabinate or substantial portions of its original source
 code is prohibited without prior written permission from the Copyright
 Holder.
 
@@ -142,7 +142,7 @@ Commercial use includes, but is not limited to:
 11. NO TRANSFER OF OWNERSHIP
 
 Nothing in this License transfers ownership or intellectual property rights
-in CodeSparrow to any contributor, user, or third party.
+in CodeCabinate to any contributor, user, or third party.
 
 12. COPYRIGHT
 
@@ -152,18 +152,18 @@ All Rights Reserved.
 
 13. DISCLAIMER
 
-CodeSparrow is provided "AS IS" and without warranties of any kind, to the
+CodeCabinate is provided "AS IS" and without warranties of any kind, to the
 maximum extent permitted by applicable law.
 
 14. LIMITATION OF LIABILITY
 
 To the maximum extent permitted by applicable law, the Copyright Holder
 shall not be liable for damages arising from the use or inability to use
-CodeSparrow.
+CodeCabinate.
 
 15. LICENSE CHANGES
 
-The Copyright Holder may release future versions of CodeSparrow under
+The Copyright Holder may release future versions of CodeCabinate under
 different license terms.
 
 Changes to future versions do not automatically revoke rights lawfully
@@ -186,9 +186,9 @@ Email: sachinchau444@gmail.com
 
 18. FINAL NOTICE
 
-CodeSparrow is proprietary software.
+CodeCabinate is proprietary software.
 
 Public availability of the source code does not grant permission to use
-CodeSparrow as another person's or organization's own project.
+CodeCabinate as another person's or organization's own project.
 
 All rights not expressly granted under this License are reserved.
