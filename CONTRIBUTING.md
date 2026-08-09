@@ -1,14 +1,14 @@
-# Contributing to CodeSparrow
+# Contributing to CodeCabinate
 
-Thank you for your interest in contributing to **CodeSparrow**.
+Thank you for your interest in contributing to **CodeCabinate**.
 
-CodeSparrow is a proprietary project. Contributions are welcome, but the project and its source code remain subject to the **CodeSparrow Proprietary Software License**.
+CodeCabinate is a proprietary project. Contributions are welcome, but the project and its source code remain subject to the **CodeCabinate Proprietary Software License**.
 
 ## How to Contribute
 
 ### 1. Fork the Repository
 
-Create a fork of the official CodeSparrow repository on GitHub.
+Create a fork of the official CodeCabinate repository on GitHub.
 
 ### 2. Create a Branch
 
@@ -70,7 +70,7 @@ fix
 
 ### 6. Submit a Pull Request
 
-Open a Pull Request against the appropriate branch of the official CodeSparrow repository.
+Open a Pull Request against the appropriate branch of the official CodeCabinate repository.
 
 Your Pull Request should explain:
 
@@ -81,7 +81,7 @@ Your Pull Request should explain:
 
 ### 7. Code Review
 
-All Pull Requests are reviewed by the CodeSparrow project maintainers.
+All Pull Requests are reviewed by the CodeCabinate project maintainers.
 
 A Pull Request may be:
 
@@ -93,17 +93,17 @@ Submitting a Pull Request does not guarantee that the contribution will be accep
 
 ## Contribution Rights
 
-By submitting a contribution to CodeSparrow, you agree that the contribution may be reviewed, modified, incorporated, and distributed as part of the official CodeSparrow project, subject to the applicable contribution agreement and project license.
+By submitting a contribution to CodeCabinate, you agree that the contribution may be reviewed, modified, incorporated, and distributed as part of the official CodeCabinate project, subject to the applicable contribution agreement and project license.
 
-Contributing to CodeSparrow does not:
+Contributing to CodeCabinate does not:
 
-* Give you ownership of the CodeSparrow project.
-* Grant you permission to copy or rebrand CodeSparrow.
-* Grant you permission to redistribute CodeSparrow.
-* Grant you permission to sell CodeSparrow.
-* Grant you permission to commercially exploit CodeSparrow.
+* Give you ownership of the CodeCabinate project.
+* Grant you permission to copy or rebrand CodeCabinate.
+* Grant you permission to redistribute CodeCabinate.
+* Grant you permission to sell CodeCabinate.
+* Grant you permission to commercially exploit CodeCabinate.
 
-All rights not expressly granted under the applicable CodeSparrow license are reserved by the project owner.
+All rights not expressly granted under the applicable CodeCabinate license are reserved by the project owner.
 
 ## Third-Party Code
 
@@ -111,7 +111,7 @@ Do not submit code copied from another project unless you have verified that its
 
 When submitting third-party code:
 
-* Ensure that its license is compatible with the CodeSparrow project.
+* Ensure that its license is compatible with the CodeCabinate project.
 * Clearly identify the third-party code when required.
 * Preserve required copyright notices and license information.
 * Include applicable third-party license information when required.
@@ -126,6 +126,6 @@ Please follow the instructions provided in `SECURITY.md` for responsibly reporti
 
 ## Questions
 
-For questions about contributing to CodeSparrow, open a GitHub Discussion or contact the project maintainers through the official project channels.
+For questions about contributing to CodeCabinate, open a GitHub Discussion or contact the project maintainers through the official project channels.
 
-Thank you for helping improve CodeSparrow.
+Thank you for helping improve CodeCabinate.
