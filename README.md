@@ -1,4 +1,4 @@
-# 🧠 CodeSparrow
+# 🧠 CodeCabinate
 
 A developer-focused platform to **practice DSA, store reusable code, and build a personal knowledge system**—all in one place.
 
@@ -6,7 +6,7 @@ A developer-focused platform to **practice DSA, store reusable code, and build a
 
 ## 🚀 Overview
 
-**CodeSparrow** is designed to solve a common problem:
+**CodeCabinate** is designed to solve a common problem:
 
 > Developers solve problems but forget patterns and struggle to reuse solutions later, and the most important they have to use different platforms for different task
 
@@ -18,7 +18,7 @@ This platform connects learning, storing, and reusing code into a single workflo
 
 ## 🎯 Core Idea
 
-Instead of using multiple tools for different purposes, CodeSparrow combines:
+Instead of using multiple tools for different purposes, CodeCabinate combines:
 
 * DSA Practice
 * Code Snippet Storage
@@ -123,7 +123,7 @@ Database (MySQL)
 
 ## 🐳 Docker Support
 
-CodeSparrow supports running backend services using Docker.
+CodeCabinate supports running backend services using Docker.
 
 The repository does not include actual configuration files containing credentials.
 
@@ -132,7 +132,7 @@ Create your own `application.properties` or environment variables using the exam
 ### Example Docker Configuration
 
 ```properties
-spring.datasource.url=jdbc:mysql://host.docker.internal:3306/codesparrow?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.url=jdbc:mysql://host.docker.internal:3306/CodeCabinate?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 spring.datasource.username=root
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -149,7 +149,7 @@ spring.datasource.hikari.initialization-fail-timeout=60000
 ```properties
 spring.application.name=DashboardService
 
-spring.datasource.url=jdbc:mysql://localhost:3306/codesparrow
+spring.datasource.url=jdbc:mysql://localhost:3306/CodeCabinate
 spring.datasource.username=root
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -205,7 +205,7 @@ Use environment variables or local configuration files instead.
 ## 📁 Project Structure
 
 ```text
-codesparrow/
+CodeCabinate/
 ├── backend/
 │   ├── auth/
 │   ├── snippets/
