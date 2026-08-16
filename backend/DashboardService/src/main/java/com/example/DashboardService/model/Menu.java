@@ -34,6 +34,8 @@ public class Menu {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    private String placement;
+
     @Transient
     private List<Menu> children = new ArrayList<>();
 
@@ -98,6 +100,15 @@ public class Menu {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+
+    public String getPlacement() {
+        return placement;
+    }
+
+    public void setPlacement(String placement) {
+        this.placement = placement;
     }
 
 

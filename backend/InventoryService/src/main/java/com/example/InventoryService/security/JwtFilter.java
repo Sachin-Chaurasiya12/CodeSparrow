@@ -3,6 +3,7 @@ package com.example.InventoryService.security;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
+    @Autowired
     private JwtService jwtService;
 
     @Override
@@ -27,7 +29,7 @@ public class JwtFilter extends OncePerRequestFilter {
         
             String authHeader = request.getHeader("Authorization");
 
-            if(authHeader == null || authHeader.startsWith("bearer ")){
+            if(authHeader == null || !authHeader.startsWith("Bearer ")){
                 filterChain.doFilter(request, response);
                 return;
             }

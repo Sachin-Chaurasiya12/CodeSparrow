@@ -1,7 +1,7 @@
 import { useState } from "react";
 import bg from "./assets/premium_vector-1713201017366-f764a073f393.webp";
 import { Link } from "react-router-dom";
-import logo from "./assets/brand.png";
+import logo from "./assets/CodeCabinateLogo.png";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -244,18 +244,28 @@ const showAlert = (msg, type) => {
   color: #166534;
   border: 1px solid #bbf7d0;
 }
-  .brand {
+.brand {
   display: flex;
   align-items: center;
   font-weight: 800;
-  font-size: 25px;
-  margin-bottom: 20px;
-  color: #6366f1;
+  gap:8px;
+  font-size: 28px;
+  margin-bottom: 5px;
   text-transform: uppercase;
+  background: linear-gradient(
+  135deg,
+  #5748F7 0%,
+  #7657F6 45%,
+  #4C8DFF 100%
+);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
   .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -277,7 +287,7 @@ const showAlert = (msg, type) => {
           <div className="left">
             <div className="brand">
               <img src={logo} alt="logo" className="brand-logo" />
-              <span>Code Sparrow</span>
+              <span>Code Cabinate</span>
             </div>
             
             <h2>Create Account</h2>

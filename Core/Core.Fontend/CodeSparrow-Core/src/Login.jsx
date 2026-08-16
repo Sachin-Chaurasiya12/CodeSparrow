@@ -2,7 +2,7 @@ import { useState,useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import bg from "./assets/loginimage.webp";
-import logo from "./assets/brand.png";
+import logo from "./assets/CodeCabinateLogo.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -120,7 +120,8 @@ function Login() {
 
         .brand {
           font-weight: 800;
-          font-size: 25px;
+          font-size: 50px;
+          gap:10px;
           margin-bottom: 30px;
           color: #6366f1;
           text-transform: uppercase;
@@ -222,15 +223,27 @@ function Login() {
           display: flex;
           align-items: center;
           font-weight: 800;
-          font-size: 25px;
+          font-size: 26px;
           margin-bottom: 5px;
-          color: #6366f1;
           text-transform: uppercase;
-        } 
+
+          background: linear-gradient(
+            135deg,
+            #5748F7 0%,
+            #7657F6 45%,
+            #4C8DFF 100%
+          );
+
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+        }
         .brand-logo {
-          width: 68px;
-          height: 68px;
+          width: 60px;
+          height: 60px;
           object-fit: contain;
+          
         }
         @media (max-width: 850px) {
           .right { display: none; }
@@ -243,7 +256,7 @@ function Login() {
           <div className="left">
             <div className="brand">
               <img src={logo} alt="logo" className="brand-logo" />
-              <span>Code Sparrow</span>
+              <span>Code Cabinate</span>
             </div>
 
             <h2>Welcome Back!</h2>

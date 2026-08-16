@@ -1,98 +1,23 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useRef, useState, useCallback } from "react";
 import { FILE_CONFIG } from "./fileTypeConfig";
 
 const REQUEST_TIMEOUT = 30000;
 
 function NewSnippetPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [title, setTitle] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [titleId, setTitleId] = useState(null);
 
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
-
-  const isValidId = useCallback((id) => {
-    return /^[a-zA-Z0-9_-]+$/.test(id) && id.length <= 100;
-  }, []);
-
-  useEffect(() => {
-    const snippetId = searchParams.get("id");
-
-    if (snippetId) {
-      if (!isValidId(snippetId)) {
-        setError("Invalid snippet ID");
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      setIsEditMode(true);
-      setEditId(snippetId);
-
-      abortControllerRef.current = new AbortController();
-      const timeoutId = setTimeout(
-        () => abortControllerRef.current?.abort(),
-        REQUEST_TIMEOUT
-      );
-
-      fetch(`/api/snippets/${encodeURIComponent(snippetId)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: abortControllerRef.current.signal,
-      })
-        .then((res) => {
-          clearTimeout(timeoutId);
-
-          if (!res.ok) {
-            throw new Error(
-              `Failed to load snippet: ${res.status} ${res.statusText}`
-            );
-          }
-
-          return res.json();
-        })
-        .then((data) => {
-          if (!data.title || typeof data.title !== "string") {
-            throw new Error("Invalid snippet data received");
-          }
-
-          setTitle(data.title);
-          setContent(data.content || "");
-          setAttachments(Array.isArray(data.attachments) ? data.attachments : []);
-          setError(null);
-          setLoading(false);
-        })
-        .catch((err) => {
-          clearTimeout(timeoutId);
-
-          if (err.name === "AbortError") {
-            setError("Request timeout. Please try again.");
-          } else {
-            console.error("Failed to load snippet:", err);
-            setError(err.message || "Failed to load snippet. Please try again.");
-          }
-
-          setLoading(false);
-        });
-
-      return () => {
-        abortControllerRef.current?.abort();
-      };
-    }
-  }, [searchParams, isValidId]);
 
   const gradientBtn = {
     background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
@@ -192,6 +117,18 @@ function NewSnippetPage() {
         return;
       }
 
+      const isImage = file.type.startsWith("image/");
+
+      if (isImage) {
+        const currentImageCount = attachments.filter((a) => a.isImage).length +
+          next.filter((a) => a.isImage).length;
+
+        if (currentImageCount >= 2) {
+          errors.push(`${file.name}: Maximum 2 images allowed`);
+          return;
+        }
+      }
+
       const url = URL.createObjectURL(file);
 
       next.push({
@@ -200,7 +137,8 @@ function NewSnippetPage() {
         type: file.type,
         url,
         size: file.size,
-        isImage: file.type.startsWith("image/"),
+        isImage,
+        file,
       });
     });
 
@@ -243,45 +181,6 @@ function NewSnippetPage() {
     });
   };
 
-  const downloadAs = async () => {
-    const hasImages = attachments.some((a) => a.isImage);
-
-    if (hasImages) {
-      setError("Cannot download when images are attached. Please remove images first.");
-      return;
-    }
-
-    try {
-      const safeTitle = (title || "untitled")
-        .replace(/[^a-z0-9-_]+/gi, "_");
-
-      const blob = new Blob([content], {
-        type: "text/plain;charset=utf-8",
-      });
-
-      triggerDownload(blob, `${safeTitle}.txt`);
-    } catch (err) {
-      console.error("Download error:", err);
-      setError("Failed to download file. Please try again.");
-    }
-  };
-
-  const triggerDownload = (blob, filename) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = filename;
-
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-  };
-
   const validateSnippet = useCallback(() => {
     const trimmedTitle = title.trim();
 
@@ -303,15 +202,39 @@ function NewSnippetPage() {
     return {
       title: trimmedTitle,
       content: content.trim(),
-      attachments: attachments.map(({ id, name, type, size, isImage }) => ({
-        id,
-        name,
-        type,
-        size,
-        isImage,
-      })),
     };
-  }, [title, content, attachments]);
+  }, [title, content]);
+
+  const uploadImage = useCallback(async (file, slot, tId) => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      throw new Error("Please login again");
+    }
+
+    const formData = new FormData();
+    formData.append("name", file.name);
+    formData.append("file", file);
+    formData.append("titleid", tId);
+
+    const endpoint = slot === 0 ? "/inventory/uploadImage1" : "/inventory/uploadImage2";
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || `Image upload failed: ${res.status}`);
+    }
+
+    return data;
+  }, []);
 
   const handleConfirmSave = useCallback(async () => {
     const snippetData = validateSnippet();
@@ -330,16 +253,17 @@ function NewSnippetPage() {
     );
 
     try {
-      const url = isEditMode && editId
-        ? `/api/snippets/${encodeURIComponent(editId)}`
-        : "/api/snippets";
+      const token = localStorage.getItem("accessToken");
 
-      const method = isEditMode && editId ? "PUT" : "POST";
+      if (!token) {
+        throw new Error("Please login again");
+      }
 
-      const response = await fetch(url, {
-        method,
+      const response = await fetch("/inventory/createnew", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(snippetData),
         signal: abortControllerRef.current.signal,
@@ -350,18 +274,30 @@ function NewSnippetPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `Failed to save snippet: ${response.status}`
+          errorData.message || `Failed to save content: ${response.status}`
         );
       }
 
-      await response.json();
+      const responseData = await response.json();
+      const createdTitleId = responseData.title_id;
+
+      if (!createdTitleId) {
+        throw new Error("No title ID returned from server");
+      }
+
+      setTitleId(createdTitleId);
+
+      const imageAttachments = attachments.filter((a) => a.isImage && a.file);
+
+      for (let i = 0; i < imageAttachments.length && i < 2; i++) {
+        await uploadImage(imageAttachments[i].file, i, createdTitleId);
+      }
 
       setShowSaveModal(false);
       setTitle("");
       setContent("");
       setAttachments([]);
-      setIsEditMode(false);
-      setEditId(null);
+      setTitleId(null);
       setError(null);
 
       navigate("/Inventory");
@@ -371,99 +307,13 @@ function NewSnippetPage() {
       if (err.name === "AbortError") {
         setError("Request timeout. Please try again.");
       } else {
-        console.error("Error saving snippet:", err);
-        setError(err.message || "Failed to save snippet. Please try again.");
+        console.error("Error saving content:", err);
+        setError(err.message || "Failed to save content. Please try again.");
       }
     } finally {
       setSaving(false);
     }
-  }, [validateSnippet, isEditMode, editId, navigate]);
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "'Inter', sans-serif",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "18px",
-            fontWeight: "600",
-            color: "#1a1a1a",
-          }}
-        >
-          Loading snippet...
-        </div>
-      </div>
-    );
-  }
-
-  if (error && isEditMode) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#ffffff",
-          padding: "2.5rem 3rem",
-          fontFamily: "'Inter', sans-serif",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "500px",
-            background: "#fff5f5",
-            border: "1px solid #feb2b2",
-            borderRadius: "12px",
-            padding: "24px",
-            textAlign: "center",
-          }}
-        >
-          <h2
-            style={{
-              color: "#c53030",
-              margin: "0 0 12px",
-              fontSize: "20px",
-            }}
-          >
-            Error Loading Snippet
-          </h2>
-          <p
-            style={{
-              color: "#742a2a",
-              margin: "0 0 20px",
-              fontSize: "14px",
-            }}
-          >
-            {error}
-          </p>
-          <button
-            onClick={() => navigate("/Inventory")}
-            style={{
-              padding: "10px 24px",
-              borderRadius: "30px",
-              border: "none",
-              background: "#c53030",
-              color: "white",
-              fontWeight: "700",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Back to Inventory
-          </button>
-        </div>
-      </div>
-    );
-  }
+  }, [validateSnippet, attachments, uploadImage, navigate]);
 
   return (
     <div
@@ -614,45 +464,28 @@ function NewSnippetPage() {
                   color: "#1a1a1a",
                 }}
               >
-                {isEditMode ? "Edit Snippet" : "Create New"}
+                Create New
               </h2>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
+            <button
+              onClick={handleUploadClick}
+              style={gradientBtn}
             >
+              <i className="bi bi-plus-lg" />
+              Upload
+            </button>
 
-              <button
-                onClick={handleUploadClick}
-                style={gradientBtn}
-              >
-                <i className="bi bi-plus-lg" />
-                Upload
-              </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              style={{
+                display: "none",
+              }}
+            />
 
-              <button
-                onClick={downloadAs}
-                style={gradientBtn}
-              >
-                <i className="bi bi-download" />
-                Download
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                style={{
-                  display: "none",
-                }}
-              />
-
-            </div>
           </div>
 
           <div
@@ -689,7 +522,7 @@ function NewSnippetPage() {
                 style={{
                   flex: 1,
                   width: "100%",
-                  minHeight: "420px",
+                  minHeight: "620px",
                   border: "none",
                   outline: "none",
                   resize: "vertical",

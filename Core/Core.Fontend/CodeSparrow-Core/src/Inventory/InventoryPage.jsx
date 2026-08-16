@@ -49,25 +49,31 @@ useEffect(() => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update scrollbar position
+// Update scrollbar position
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
+      const track = scrollTrackRef.current;
+      if (!track) return;
+
+      const trackHeight = track.clientHeight;
+      const thumbHeight = 90;
+      const maxThumbTop = trackHeight - thumbHeight;
+
       const scrollHeight = container.scrollHeight - container.clientHeight;
-      if (scrollHeight === 0) {
+      if (scrollHeight <= 0) {
         setScrollThumbTop(0);
         return;
       }
+
       const scrollPercentage = container.scrollTop / scrollHeight;
-      const trackHeight = 300;
-      const thumbHeight = 90;
-      const maxThumbTop = trackHeight - thumbHeight;
-      setScrollThumbTop(scrollPercentage * maxThumbTop);
+      setScrollThumbTop(Math.max(0, Math.min(scrollPercentage * maxThumbTop, maxThumbTop)));
     };
 
     container.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -78,12 +84,14 @@ useEffect(() => {
 
       const track = scrollTrackRef.current;
       const container = scrollContainerRef.current;
+      const thumbHeight = 90;
       const rect = track.getBoundingClientRect();
-      const newTop = Math.max(0, Math.min(e.clientY - rect.top, rect.height - 90));
+      const maxThumbTop = rect.height - thumbHeight;
+      const newTop = Math.max(0, Math.min(e.clientY - rect.top - thumbHeight / 2, maxThumbTop));
 
       setScrollThumbTop(newTop);
 
-      const scrollPercentage = newTop / (rect.height - 90);
+      const scrollPercentage = maxThumbTop > 0 ? newTop / maxThumbTop : 0;
       const scrollHeight = container.scrollHeight - container.clientHeight;
       container.scrollTop = scrollPercentage * scrollHeight;
     };
@@ -334,7 +342,7 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                 flexDirection: 'column',
                 gap: isMobile ? '10px' : '14px',
                 minWidth: 0,
-                maxHeight: '300px',
+                maxHeight: '450px',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 paddingRight: !isMobile ? '5px' : '0',

@@ -20,6 +20,7 @@ const GLOBAL_STYLES = `
     display: inline-block;
     overflow: hidden;
     white-space: nowrap;
+    max-width: 100%;
 
     width: 0;
     animation: expandUsername 1s ease forwards;
@@ -189,6 +190,15 @@ const GLOBAL_STYLES = `
     .content-wrapper {
       grid-template-columns: 1fr;
       margin-top: 60px;
+      gap: 30px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .content-wrapper {
+      margin-top: 50px;
+      gap: 20px;
+      padding: 0 12px;
     }
   }
 
@@ -214,6 +224,13 @@ const GLOBAL_STYLES = `
     }
   }
 
+  @media (max-width: 480px) {
+    .profile-card {
+      padding: 35px 20px;
+      border-radius: 14px;
+    }
+  }
+
   .avatar-container {
     position: relative;
     margin-bottom: 25px;
@@ -229,11 +246,25 @@ const GLOBAL_STYLES = `
     object-fit: cover;
   }
 
+  @media (max-width: 480px) {
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-width: 4px;
+    }
+  }
+
   .profile-card h2 {
     font-size: 28px;
     font-weight: 700;
     color: #1a1a1a;
     margin: 20px 0 10px 0;
+  }
+
+  @media (max-width: 480px) {
+    .profile-card h2 {
+      font-size: 22px;
+    }
   }
 
   .profile-card .company {
@@ -261,6 +292,14 @@ const GLOBAL_STYLES = `
     border-bottom: 2px solid #f0f0f0;
   }
 
+  @media (max-width: 480px) {
+    .stats-grid {
+      margin: 25px 0;
+      padding: 25px 0;
+      gap: 12px;
+    }
+  }
+
   .stat-item {
     text-align: center;
   }
@@ -276,12 +315,25 @@ const GLOBAL_STYLES = `
     margin-bottom: 8px;
   }
 
+  @media (max-width: 480px) {
+    .stat-value {
+      font-size: 24px;
+    }
+  }
+
   .stat-label {
     font-size: 13px;
     color: #999;
     text-transform: uppercase;
     letter-spacing: 0.7px;
     font-weight: 600;
+  }
+
+  @media (max-width: 480px) {
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 0.4px;
+    }
   }
 
   .join-date {
@@ -356,10 +408,24 @@ const GLOBAL_STYLES = `
     }
   }
 
+  @media (max-width: 480px) {
+    .settings-container {
+      padding: 28px 18px;
+      border-radius: 14px;
+    }
+  }
+
   .settings-header {
     margin-bottom: 40px;
     padding-bottom: 30px;
     border-bottom: 2px solid #f0f0f0;
+  }
+
+  @media (max-width: 480px) {
+    .settings-header {
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+    }
   }
 
   .settings-header h2 {
@@ -367,6 +433,12 @@ const GLOBAL_STYLES = `
     font-weight: 600;
     color: #1a1a1a;
     margin-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .settings-header h2 {
+      font-size: 22px;
+    }
   }
 
   .settings-header p {
@@ -417,6 +489,7 @@ const GLOBAL_STYLES = `
     transition: all 0.3s ease;
     color: #333;
     background: white;
+    width: 100%;
   }
 
   .form-group textarea {
@@ -539,6 +612,10 @@ const GLOBAL_STYLES = `
   }
 
   @media (max-width: 640px) {
+    .page-container {
+      padding: 24px 12px;
+    }
+
     .header-banner {
       height: 240px;
       border-radius: 16px;
@@ -548,6 +625,11 @@ const GLOBAL_STYLES = `
       padding: 0 30px;
       flex-direction: column;
       justify-content: center;
+    }
+
+    .banner-text {
+      max-width: 100%;
+      text-align: center;
     }
 
     .banner-text h1 {
@@ -579,6 +661,18 @@ const GLOBAL_STYLES = `
     .upload-btn {
       padding: 8px 16px;
       font-size: 12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .top-username {
+      font-size: 20px;
+      padding: 6px 14px;
+    }
+
+    @keyframes expandUsername {
+      from { width: 0; opacity: 0; }
+      to { width: 140px; opacity: 1; }
     }
   }
 `;
@@ -1028,7 +1122,7 @@ export default function ProfileApp() {
                 <p>View your profile information and achievements</p>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px" }} className="form-grid">
                 <div style={{ gridColumn: "1 / -1" }}>
                   <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#333", marginBottom: "15px" }}>
                     Personal Information
