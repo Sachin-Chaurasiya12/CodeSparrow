@@ -3,7 +3,7 @@
 ## Supported Versions
 
 Security fixes are generally applied to the actively maintained version of
-CodeSparrow.
+CodeCabinate.
 
 | Version | Supported |
 |---------|-----------|

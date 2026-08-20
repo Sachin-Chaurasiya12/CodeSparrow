@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an improvement or new feature for CodeSparrow
+about: Suggest an improvement or new feature for CodeCabinate
 title: "[FEATURE] "
 labels: enhancement
 assignees: ""
