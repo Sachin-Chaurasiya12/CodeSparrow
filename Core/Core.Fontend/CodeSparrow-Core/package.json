@@ -10,9 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-table": "^9.1.2",
+    "axios": "^1.19.0",
+    "bootstrap": "^5.3.8",
     "docx": "^9.7.1",
     "framer-motion": "^12.38.0",
     "react": "^19.2.5",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.11.0"
   },

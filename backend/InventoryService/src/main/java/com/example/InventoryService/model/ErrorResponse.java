@@ -21,6 +21,9 @@ public class ErrorResponse {
         this.message = message;
         this.path = path;
     }
+    public ErrorResponse(String message) {
+        this.message = message;
+    }
 
     public String getError() {
         return error;

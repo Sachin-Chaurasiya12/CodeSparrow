@@ -16,4 +16,5 @@ public interface ICreateInventoryService {
     ContentResponseDto CreateNewContent(Long userid,ContentRequestDto request);
     ResponseEntity<Map> uploadFileOne(Image image, Long id);
     ResponseEntity<Map> uploadFileTwo(Image image, Long id);
+    public ResponseEntity<String> deleteSnippet(int id,Long userid);
 }

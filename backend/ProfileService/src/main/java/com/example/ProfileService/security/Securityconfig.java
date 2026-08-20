@@ -30,8 +30,6 @@ public class Securityconfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html"
                 ).permitAll()
-
-                .requestMatchers(HttpMethod.POST, "/profile").permitAll()
                 .anyRequest().authenticated()
             )
             
@@ -41,4 +39,4 @@ public class Securityconfig {
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
-}
+}   

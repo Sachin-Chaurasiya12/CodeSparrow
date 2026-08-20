@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import noResultsImg from './assets/nothing-found-illustration-svg-download-png-2815869.webp';
+
+const API_BASE_URL = "http://localhost:8084";
+const PAGE_SIZE = 15;
 
 export default function InventoryPage() {
   const navigate = useNavigate();
@@ -17,39 +21,100 @@ export default function InventoryPage() {
   const [searchText, setSearchText] = useState('');
   const [isCreateHovered, setIsCreateHovered] = useState(false);
   const [hoveredPage, setHoveredPage] = useState(null);
-const [hoveredArrow, setHoveredArrow] = useState(null);
+  const [hoveredArrow, setHoveredArrow] = useState(null);
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (
-      searchContainerRef.current &&
-      !searchContainerRef.current.contains(event.target)
-    ) {
-      // Remove focus
-      searchInputRef.current?.blur();
+  const [snippets, setSnippets] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-      // Reset search state
-      setIsSearchFocused(false);
-      setIsSearchHovered(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-      // Clear the typed text
-      setSearchText('');
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        searchInputRef.current?.blur();
+        setIsSearchFocused(false);
+        setIsSearchHovered(false);
+        setSearchText('');
+      }
+    };
 
-  document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
 
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-  };
-}, []);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-// Update scrollbar position
+  // Debounce search input
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  // Fetch snippets from backend whenever page or search term changes
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchSnippets = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          page: String(currentPage - 1),
+          size: String(PAGE_SIZE),
+          sortBy: 'title'
+        });
+        if (debouncedSearch) {
+          params.append('searchTerm', debouncedSearch);
+        }
+
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${API_BASE_URL}/inventory/snippets?${params.toString()}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load snippets (${response.status})`);
+        }
+
+        const data = await response.json();
+        setSnippets(data.content ?? []);
+        setTotalPages(data.totalPages > 0 ? data.totalPages : 1);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError(err.message);
+          setSnippets([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSnippets();
+    return () => controller.abort();
+  }, [currentPage, debouncedSearch]);
+
+  // Update scrollbar position
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -75,7 +140,7 @@ useEffect(() => {
     container.addEventListener('scroll', handleScroll);
     handleScroll();
     return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [snippets]);
 
   // Handle scrollbar thumb drag
   useEffect(() => {
@@ -111,30 +176,60 @@ useEffect(() => {
     };
   }, [isDraggingScrollbar]);
 
-  const snippets = [
-    { id: 1, title: 'My first Code snippet' },
-    { id: 2, title: 'My Second Code snippet' },
-    { id: 3, title: 'My Third Code snippet' },
-    { id: 4, title: 'My Fourth Code snippet' },
-    { id: 5, title: 'My Fifth Code snippet' },
-    { id: 6, title: 'My Sixth Code snippet' },
-    { id: 7, title: 'My Seventh Code snippet' },
-    { id: 8, title: 'My Eighth Code snippet' },
-    { id: 9, title: 'My Ninth Code snippet' },
-    { id: 10, title: 'My Tenth Code snippet' },
-  ];
-  const sortedSnippets = [...snippets].sort((a, b) =>
-  sortAscending ? a.id - b.id : b.id - a.id
-);
-const totalPages = 2;
+  const displayedSnippets = sortAscending ? snippets : [...snippets].reverse();
 
-const handlePreviousPage = () => {
-  setCurrentPage((prev) => Math.max(prev - 1, 1));
-};
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
-const handleNextPage = () => {
-  setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-};
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  // Build a windowed list of page numbers around the current page
+  const getPageNumbers = () => {
+    const maxVisible = isMobile ? 3 : 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    start = Math.max(1, end - maxVisible + 1);
+    const pages = [];
+    for (let p = start; p <= end; p++) pages.push(p);
+    return pages;
+  };
+
+  const handleDeleteClick = (id) => {
+    setConfirmDeleteId(id);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteId(null);
+  };
+
+  const handleConfirmDelete = async (id) => {
+    setDeletingId(id);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_BASE_URL}/inventory/deletesnippet?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      if (!response.ok) {
+        const msg = await response.text();
+        throw new Error(msg || `Failed to delete snippet (${response.status})`);
+      }
+
+      setSnippets((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
+
   return (
     <div style={{
   minHeight: '100vh',
@@ -342,8 +437,9 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                 flexDirection: 'column',
                 gap: isMobile ? '10px' : '14px',
                 minWidth: 0,
+                minHeight: '450px',
                 maxHeight: '450px',
-                overflowY: 'auto',
+                overflowY: displayedSnippets.length > 6 ? 'auto' : 'hidden',
                 overflowX: 'hidden',
                 paddingRight: !isMobile ? '5px' : '0',
                 scrollBehavior: 'smooth',
@@ -351,7 +447,36 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                 scrollbarWidth: 'none'
               }}
             >
-              {sortedSnippets.map((snippet, idx) => (
+              {loading && (
+                <div style={{ padding: '1rem', color: '#6a6a6a', fontSize: '15px' }}>
+                  Loading snippets...
+                </div>
+              )}
+
+              {!loading && error && (
+                <div style={{ padding: '1rem', color: '#d64545', fontSize: '15px' }}>
+                  {error}
+                </div>
+              )}
+
+              {!loading && !error && displayedSnippets.length === 0 && (
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '450px',
+                  color: '#6428ad',
+                  fontSize: '15px',
+                  marginTop:'-10px'
+                }}>
+                  <img src={noResultsImg} alt="No snippets found" style={{ width: '400px', maxWidth: '90%' }} />
+                  <span style={{marginTop:'-10px',color:'6233A1', opacity:'60%'}}>No Snippet Found!</span>
+                </div>
+              )}
+
+              {!loading && !error && displayedSnippets.map((snippet, idx) => (
                 <div
                   key={snippet.id}
                   style={{
@@ -363,6 +488,7 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                     border: '1px solid #d8cfe0',
                     borderLeft: '5px solid #6C4FD6',
                     borderRadius: '6px',
+                    cursor:'pointer',
                     gap: '10px',
                     flexWrap: 'wrap',
                     flexShrink: 0
@@ -375,28 +501,30 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                     color: '#1a1a2e',
                     wordBreak: 'break-word',
                     flex: '1 1 auto',
-                    minWidth: 0
-                  }}>
-                    {sortAscending ? idx + 1 : snippets.length - idx}) {snippet.title}
+                    minWidth: 0,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/new/${snippet.id}`)}
+                  >
+                    {(currentPage - 1) * PAGE_SIZE + idx + 1}) {snippet.title}
                   </span>
                   <div style={{ display: 'flex', gap: isMobile ? '12px' : '18px', flexShrink: 0 }}>
-                    <i className="bi bi-pencil-square" style={{
-                      fontSize: isMobile ? '18px' : '20px',
-                      color: '#3a3a3a',
-                      cursor: 'pointer'
-                    }}></i>
-                    <i className="bi bi-trash" style={{
-                      fontSize: isMobile ? '18px' : '20px',
-                      color: '#d64545',
-                      cursor: 'pointer'
-                    }}></i>
+                    <i
+                      className="bi bi-trash"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteClick(snippet.id); }}
+                      style={{
+                        fontSize: isMobile ? '18px' : '20px',
+                        color: '#d64545',
+                        cursor: 'pointer'
+                      }}
+                    ></i>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Custom Scrollbar - visible only on desktop */}
-            {!isMobile && (
+            {!isMobile && displayedSnippets.length > 6 && (
               <div
                 ref={scrollTrackRef}
                 style={{
@@ -505,12 +633,12 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
 </button>
 
   {/* Page Numbers */}
-  {[1, 2].map((p) => (
+  {getPageNumbers().map((p) => (
     <button
       key={p}
-      onClick={() => setCurrentPage(prev => Math.min(prev + 1, 2))}
-      onMouseEnter={() => setHoveredArrow('right')}
-      onMouseLeave={() => setHoveredArrow(null)}
+      onClick={() => setCurrentPage(p)}
+      onMouseEnter={() => setHoveredPage(p)}
+      onMouseLeave={() => setHoveredPage(null)}
       style={{
         width: isMobile ? '38px' : '42px',
         height: isMobile ? '38px' : '42px',
@@ -582,6 +710,109 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId !== null && (
+        <div
+          onClick={handleCancelDelete}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(26, 26, 26, 0.5)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '18px',
+              padding: isMobile ? '1.5rem' : '2rem',
+              width: isMobile ? '100%' : '380px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #e4dcf0',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: '#fbeaea',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem auto'
+            }}>
+              <i className="bi bi-trash" style={{ fontSize: '24px', color: '#d64545' }}></i>
+            </div>
+
+            <h3 style={{
+              fontSize: isMobile ? '18px' : '20px',
+              fontWeight: '800',
+              color: '#1a1a1a',
+              margin: '0 0 0.5rem 0'
+            }}>
+              Delete Snippet?
+            </h3>
+
+            <p style={{
+              fontSize: isMobile ? '14px' : '15px',
+              color: '#6a6a6a',
+              margin: '0 0 1.5rem 0',
+              lineHeight: '1.5'
+            }}>
+              This action cannot be undone. Are you sure you want to delete this snippet?
+            </p>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleCancelDelete}
+                disabled={deletingId === confirmDeleteId}
+                style={{
+                  flex: 1,
+                  border: '1px solid #b9aee0',
+                  backgroundColor: 'white',
+                  color: '#1a1a1a',
+                  padding: '12px',
+                  borderRadius: '30px',
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  cursor: deletingId === confirmDeleteId ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleConfirmDelete(confirmDeleteId)}
+                disabled={deletingId === confirmDeleteId}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #e05656 0%, #d64545 100%)',
+                  color: 'white',
+                  padding: '12px',
+                  borderRadius: '30px',
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  cursor: deletingId === confirmDeleteId ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 6px 15px rgba(214, 69, 69, 0.35)'
+                }}
+              >
+                {deletingId === confirmDeleteId ? 'Deleting...' : 'Sure'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

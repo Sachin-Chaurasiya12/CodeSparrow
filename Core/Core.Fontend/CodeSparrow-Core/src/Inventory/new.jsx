@@ -1,11 +1,13 @@
-import { useNavigate } from "react-router-dom";
-import { useRef, useState, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { FILE_CONFIG } from "./fileTypeConfig";
 
 const REQUEST_TIMEOUT = 30000;
 
 function NewSnippetPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
 
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState([]);
@@ -15,9 +17,44 @@ function NewSnippetPage() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [titleId, setTitleId] = useState(null);
+  const [loading, setLoading] = useState(isEditMode);
+  const [charCount, setCharCount] = useState(0);
 
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
+
+  // Fetch snippet data if editing
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchSnippet = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(`/inventory/snippet/${id}`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load snippet");
+        }
+
+        const data = await response.json();
+        setTitle(data.title);
+        setContent(data.content);
+        setCharCount(data.content.length);
+        setTitleId(data.id);
+      } catch (err) {
+        setError(err.message);
+        setTimeout(() => navigate("/Inventory"), 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSnippet();
+  }, [id, isEditMode, navigate]);
 
   const gradientBtn = {
     background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
@@ -194,8 +231,8 @@ function NewSnippetPage() {
       return null;
     }
 
-    if (content.length > 100000) {
-      setError("Content must be less than 100,000 characters");
+    if (content.length > 150000) {
+      setError("Content must be less than 150,000 characters");
       return null;
     }
 
@@ -259,8 +296,11 @@ function NewSnippetPage() {
         throw new Error("Please login again");
       }
 
-      const response = await fetch("/inventory/createnew", {
-        method: "POST",
+      const endpoint = isEditMode ? `/inventory/update/${titleId}` : "/inventory/createnew";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -273,13 +313,18 @@ function NewSnippetPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 409 || errorData.message?.toLowerCase().includes('already exist')) {
+          throw new Error("Title already exists. Please use a different title.");
+        }
+        
         throw new Error(
           errorData.message || `Failed to save content: ${response.status}`
         );
       }
 
       const responseData = await response.json();
-      const createdTitleId = responseData.title_id;
+      const createdTitleId = responseData.title_id || titleId;
 
       if (!createdTitleId) {
         throw new Error("No title ID returned from server");
@@ -313,7 +358,22 @@ function NewSnippetPage() {
     } finally {
       setSaving(false);
     }
-  }, [validateSnippet, attachments, uploadImage, navigate]);
+  }, [validateSnippet, attachments, uploadImage, navigate, isEditMode, titleId]);
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        backgroundColor: "#ffffff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <div style={{ color: "#6a6a6a", fontSize: "15px" }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -335,8 +395,10 @@ function NewSnippetPage() {
         {error && (
           <div
             style={{
-              marginBottom: "1.5rem",
-              background: "#fff5f5",
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              background: "white",
               border: "1px solid #feb2b2",
               borderRadius: "8px",
               padding: "12px 16px",
@@ -346,6 +408,11 @@ function NewSnippetPage() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              gap: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              zIndex: 150,
+              maxWidth: "320px",
+              animation: "slideIn 0.3s ease",
             }}
           >
             <span>{error}</span>
@@ -358,6 +425,7 @@ function NewSnippetPage() {
                 cursor: "pointer",
                 fontSize: "18px",
                 padding: "0",
+                flexShrink: 0,
               }}
             >
               ×
@@ -464,7 +532,7 @@ function NewSnippetPage() {
                   color: "#1a1a1a",
                 }}
               >
-                Create New
+                {isEditMode ? "Edit" : "Create New"}
               </h2>
             </div>
 
@@ -490,34 +558,33 @@ function NewSnippetPage() {
 
           <div
             style={{
-              position: "relative",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              position: "relative"
             }}
           >
-
             <div
               style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "10px",
+                width: "4px",
+                minHeight: "30px",
+                backgroundColor: "#7B4FDB",
+                borderRadius: "2px",
+                marginTop: "5px",
+                flexShrink: 0,
               }}
-            >
+            />
 
-              <div
-                style={{
-                  width: "4px",
-                  minHeight: "30px",
-                  backgroundColor: "#7B4FDB",
-                  borderRadius: "2px",
-                  marginTop: "5px",
-                  flexShrink: 0,
-                }}
-              />
-
+            <div style={{ flex: 1, position: "relative" }}>
               <textarea
                 value={content}
-                onChange={(e) =>
-                  setContent(e.target.value)
-                }
+                onChange={(e) => {
+                  const newContent = e.target.value;
+                  if (newContent.length <= 150000) {
+                    setContent(newContent);
+                    setCharCount(newContent.length);
+                  }
+                }}
                 placeholder="Write Content here..."
                 style={{
                   flex: 1,
@@ -525,151 +592,161 @@ function NewSnippetPage() {
                   minHeight: "620px",
                   border: "none",
                   outline: "none",
-                  resize: "vertical",
+                  resize: "none",
                   background: "transparent",
                   fontSize: "20px",
                   fontWeight: "700",
                   color: "#1a1a1a",
-                  fontFamily:
-                    "'Inter', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   lineHeight: "1.5",
                   padding: "4px 0",
                   boxSizing: "border-box",
                 }}
               />
 
-            </div>
-
-            {attachments.length > 0 && (
-
               <div
                 style={{
-                  marginTop: "16px",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "12px",
+                  position: "absolute",
+                  bottom: "10px",
+                  right: "15px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: charCount > 140000 ? "#d64545" : "#9a9a9a"
                 }}
               >
+                {150000 - charCount} / 150000
+              </div>
+            </div>
+          </div>
 
-                {attachments.map((a) => (
+          {attachments.length > 0 && (
 
-                  <div
-                    key={a.id}
-                    style={{
-                      border:
-                        "1px solid #ededed",
-                      borderRadius: "12px",
-                      padding: "8px",
-                      background: "#fafafa",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      maxWidth: "260px",
-                    }}
-                  >
+            <div
+              style={{
+                marginTop: "16px",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "12px",
+              }}
+            >
 
-                    {a.isImage ? (
+              {attachments.map((a) => (
 
-                      <img
-                        src={a.url}
-                        alt={a.name}
-                        onClick={() =>
-                          setPreviewImage(a)
-                        }
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          transition: "transform 0.2s ease",
-                        }}
-                        onMouseEnter={(e) =>
-                          e.target.style.transform =
-                            "scale(1.05)"
-                        }
-                        onMouseLeave={(e) =>
-                          e.target.style.transform =
-                            "scale(1)"
-                        }
-                      />
+                <div
+                  key={a.id}
+                  style={{
+                    border:
+                      "1px solid #ededed",
+                    borderRadius: "12px",
+                    padding: "8px",
+                    background: "#fafafa",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    maxWidth: "260px",
+                  }}
+                >
 
-                    ) : (
+                  {a.isImage ? (
 
-                      <div
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          borderRadius: "8px",
-                          background: "#ede9fe",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#7B4FDB",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <i
-                          className="bi bi-file-earmark"
-                          style={{
-                            fontSize: "24px",
-                          }}
-                        />
-                      </div>
+                    <img
+                      src={a.url}
+                      alt={a.name}
+                      onClick={() =>
+                        setPreviewImage(a)
+                      }
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "transform 0.2s ease",
+                      }}
+                      onMouseEnter={(e) =>
+                        e.target.style.transform =
+                          "scale(1.05)"
+                      }
+                      onMouseLeave={(e) =>
+                        e.target.style.transform =
+                          "scale(1)"
+                      }
+                    />
 
-                    )}
+                  ) : (
 
                     <div
                       style={{
-                        minWidth: 0,
-                        flex: 1,
+                        width: "60px",
+                        height: "60px",
+                        borderRadius: "8px",
+                        background: "#ede9fe",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#7B4FDB",
+                        flexShrink: 0,
                       }}
                     >
-
-                      <div
+                      <i
+                        className="bi bi-file-earmark"
                         style={{
-                          fontSize: "13px",
-                          fontWeight: "600",
-                          color: "#1a1a1a",
-                          overflow: "hidden",
-                          textOverflow:
-                            "ellipsis",
-                          whiteSpace:
-                            "nowrap",
+                          fontSize: "24px",
                         }}
-                      >
-                        {a.name}
-                      </div>
-
-                      <button
-                        onClick={() =>
-                          removeAttachment(a.id)
-                        }
-                        style={{
-                          background:
-                            "transparent",
-                          border: "none",
-                          color: "#ef4444",
-                          fontSize: "12px",
-                          padding: 0,
-                          cursor: "pointer",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Remove
-                      </button>
-
+                      />
                     </div>
+
+                  )}
+
+                  <div
+                    style={{
+                      minWidth: 0,
+                      flex: 1,
+                    }}
+                  >
+
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: "#1a1a1a",
+                        overflow: "hidden",
+                        textOverflow:
+                          "ellipsis",
+                        whiteSpace:
+                          "nowrap",
+                      }}
+                    >
+                      {a.name}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        removeAttachment(a.id)
+                      }
+                      style={{
+                        background:
+                          "transparent",
+                        border: "none",
+                        color: "#ef4444",
+                        fontSize: "12px",
+                        padding: 0,
+                        cursor: "pointer",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Remove
+                    </button>
 
                   </div>
 
-                ))}
+                </div>
 
-              </div>
+              ))}
 
-            )}
+            </div>
 
-          </div>
+          )}
 
           <div
             style={{
@@ -702,7 +779,7 @@ function NewSnippetPage() {
 
       </div>
 
-      {showSaveModal && (
+      {showSaveModal && !isEditMode && (
 
         <div
           role="dialog"
@@ -843,6 +920,97 @@ function NewSnippetPage() {
 
       )}
 
+      {isEditMode && showSaveModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowSaveModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 15, 25, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+            padding: "16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "28px",
+              width: "100%",
+              maxWidth: "420px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+              fontFamily: "'Inter', sans-serif",
+              boxSizing: "border-box",
+              textAlign: "center",
+            }}
+          >
+            <h3
+              style={{
+                margin: "0 0 8px",
+                fontSize: "20px",
+                fontWeight: "800",
+                color: "#1a1a1a",
+              }}
+            >
+              Confirm Update
+            </h3>
+
+            <p
+              style={{
+                margin: "0 0 20px",
+                color: "#666",
+                fontSize: "14px",
+              }}
+            >
+              Update "{title}"?
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={() => setShowSaveModal(false)}
+                style={{
+                  padding: "10px 22px",
+                  borderRadius: "30px",
+                  border: "2px solid #1a1a1a",
+                  background: "white",
+                  color: "#1a1a1a",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmSave}
+                disabled={saving}
+                style={{
+                  ...gradientBtn,
+                  padding: "10px 26px",
+                  opacity: saving ? 0.6 : 1,
+                  cursor: saving ? "not-allowed" : "pointer",
+                }}
+              >
+                {saving ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {previewImage && (
 
         <div
@@ -932,6 +1100,18 @@ function NewSnippetPage() {
 
       )}
 
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

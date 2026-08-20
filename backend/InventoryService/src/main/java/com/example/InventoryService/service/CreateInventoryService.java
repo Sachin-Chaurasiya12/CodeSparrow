@@ -1,5 +1,6 @@
 package com.example.InventoryService.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -13,6 +14,8 @@ import com.example.InventoryService.model.Inventory;
 import com.example.InventoryService.model.titles;
 import com.example.InventoryService.model.DTO.ContentRequestDto;
 import com.example.InventoryService.model.DTO.ContentResponseDto;
+import com.example.InventoryService.model.DTO.RequestDTO;
+import com.example.InventoryService.model.DTO.SnippetResponse;
 import com.example.InventoryService.repository.InventoryRepository;
 import com.example.InventoryService.repository.TitleRepository;
 import com.example.InventoryService.service.Interface.ICreateInventoryService;
@@ -184,5 +187,28 @@ public class CreateInventoryService implements ICreateInventoryService {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+    public ResponseEntity<String> deleteSnippet(int id, Long userId) {
+
+    try {
+        titles t = title.findByIdAndUserid(id, userId)
+                .orElseThrow(() ->
+                    new RuntimeException("Snippet not found or unauthorized")
+                );
+
+        t.setActive(false);
+        title.save(t);
+
+        return ResponseEntity
+                .accepted()
+                .body("Snippet Deleted Successfully");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+    }
     }
 }

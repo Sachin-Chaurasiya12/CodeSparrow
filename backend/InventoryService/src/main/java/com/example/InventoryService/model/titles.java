@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -16,7 +17,8 @@ import jakarta.persistence.UniqueConstraint;
     name = "titles",
     uniqueConstraints = {
         @UniqueConstraint(columnNames = {"userid", "title"})
-    }
+    },
+    indexes = @Index(name = "idx_title_name", columnList = "title")
 )
 public class titles {
     

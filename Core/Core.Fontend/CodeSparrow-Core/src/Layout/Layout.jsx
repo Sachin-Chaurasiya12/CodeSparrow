@@ -27,7 +27,7 @@ export default function LayoutShell() {
 
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
-  const isCompactNav = windowWidth < 1024; // tablet + mobile: collapse nav labels
+  const isCompactNav = windowWidth < 1024;
 
   const handleLogout = async () => {
     try {
@@ -566,7 +566,7 @@ const styles = {
   },
 
   searchWrapper: {
-    height: 36,
+    height: 35,
     display: "flex",
     alignItems: "center",
     background: "#F7F6F2",
@@ -585,7 +585,7 @@ const styles = {
     outline: "none",
     background: "transparent",
     color: "#333",
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: "Inter, sans-serif",
     boxSizing: "border-box",
   },

@@ -3,34 +3,45 @@ package com.example.InventoryService.controller;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.InventoryService.model.ErrorResponse;
 import com.example.InventoryService.model.Image;
+import com.example.InventoryService.model.titles;
 import com.example.InventoryService.model.DTO.ContentRequestDto;
 import com.example.InventoryService.model.DTO.ContentResponseDto;
+import com.example.InventoryService.model.DTO.SnippetResponse;
 import com.example.InventoryService.service.Interface.ICreateInventoryService;
+import com.example.InventoryService.service.Interface.IReadInventoryService;
 
 
 @RestController
 @RequestMapping("/inventory")
 public class InventoryController {
 
-    
-    @Autowired
     private ICreateInventoryService service;
+    private IReadInventoryService readservice;
 
-    public InventoryController(ICreateInventoryService service){
+    public InventoryController(ICreateInventoryService service, IReadInventoryService readservice){
         this.service = service;
+        this.readservice = readservice;
     }
     
     @PostMapping("/createnew")
@@ -70,6 +81,29 @@ public class InventoryController {
         }
     }
 
-    
-    
+    @GetMapping("/snippets")
+    public Page<SnippetResponse> getFilteredSnippets(
+        @RequestParam(required = false) String searchTerm,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "15") int size,
+        @RequestParam(defaultValue = "title") String sortBy
+    ){
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
+        return readservice.getFilteredSnippets(searchTerm, pageable);
+    }
+
+    @GetMapping("/vaultcount")
+    public long getCount(){
+        return readservice.getSnippetsCount();
+    }
+
+    @DeleteMapping("/deletesnippet")
+    public ResponseEntity<String> deleteSnippet(
+            @RequestParam int id,
+            Authentication authentication) {
+            
+        Long userId = (Long) authentication.getPrincipal();
+            
+        return service.deleteSnippet(id, userId);
+    }
 }
