@@ -437,8 +437,8 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                 flexDirection: 'column',
                 gap: isMobile ? '10px' : '14px',
                 minWidth: 0,
-                minHeight: '450px',
-                maxHeight: '450px',
+                minHeight: '500px',
+                maxHeight: '500px',
                 overflowY: displayedSnippets.length > 6 ? 'auto' : 'hidden',
                 overflowX: 'hidden',
                 paddingRight: !isMobile ? '5px' : '0',
@@ -504,7 +504,7 @@ boxShadow: '0 6px 15px rgba(123, 79, 219, 0.35)',
                     minWidth: 0,
                     cursor: 'pointer'
                   }}
-                  onClick={() => navigate(`/new/${snippet.id}`)}
+                  onClick={() => navigate(`/view/${snippet.id}`)}
                   >
                     {(currentPage - 1) * PAGE_SIZE + idx + 1}) {snippet.title}
                   </span>

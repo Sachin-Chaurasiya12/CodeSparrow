@@ -198,7 +198,11 @@ export default function LayoutShell() {
         <div
           style={{
             ...styles.brandContainer,
-            height: isMobile ? 60 : 82,
+            height: 80,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onClick={() => navigate("/dashboard")}
         >
@@ -207,8 +211,10 @@ export default function LayoutShell() {
             alt="CodeCabinate Logo"
             style={{
               ...styles.logo,
-              width: isMobile ? 120 : isTablet ? 150 : 180,
-              height: isMobile ? 140 : isTablet ? 170 : 200,
+              width: isMobile ? 140 : isTablet ? 180 : 220,
+              height: "auto",
+              maxHeight: 180,
+              objectFit: "contain",
             }}
           />
         </div>
@@ -462,9 +468,10 @@ const styles = {
   },
 
   topbar: {
-    height: 72,
+    height: 80,
     display: "flex",
     alignItems: "center",
+    justifyContent: "flex-start",
     gap: 16,
     background: "white",
     borderBottom: "1px solid rgba(0,0,0,0.06)",
@@ -544,7 +551,7 @@ const styles = {
   navLabel: {
     overflow: "hidden",
     textOverflow: "ellipsis",
-    fontSize: 15,
+    fontSize: 17,
     letterSpacing: "-0.2px",
     whiteSpace: "nowrap",
   },

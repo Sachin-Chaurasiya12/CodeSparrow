@@ -8,6 +8,7 @@
   import MainLayout from "./Layout/Layout";
   import InventoryPage from "./Inventory/InventoryPage";
   import NewSnippetPage from "./Inventory/new";
+  import ViewUpdateSnippetPage from "./Inventory/ViewUpdateSnippetPage";
 
   
   function PublicRoute({ children }) {
@@ -36,6 +37,7 @@
         <Route path="/internal/profile" element={<Profile />} />
         <Route path="/Inventory" element={<InventoryPage />} />
         <Route path="/new" element={<NewSnippetPage />} />
+        <Route path="/view/:id" element={<ViewUpdateSnippetPage />} />
         {/* <Route 
           path="/internal/profilesetting"
           element={

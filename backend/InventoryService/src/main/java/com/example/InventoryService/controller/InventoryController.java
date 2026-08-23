@@ -28,6 +28,8 @@ import com.example.InventoryService.model.titles;
 import com.example.InventoryService.model.DTO.ContentRequestDto;
 import com.example.InventoryService.model.DTO.ContentResponseDto;
 import com.example.InventoryService.model.DTO.SnippetResponse;
+import com.example.InventoryService.model.DTO.UpdateRequest;
+import com.example.InventoryService.model.DTO.ViewContent;
 import com.example.InventoryService.service.Interface.ICreateInventoryService;
 import com.example.InventoryService.service.Interface.IReadInventoryService;
 
@@ -105,5 +107,35 @@ public class InventoryController {
         Long userId = (Long) authentication.getPrincipal();
             
         return service.deleteSnippet(id, userId);
+    }
+
+    @GetMapping("/View")
+    public ResponseEntity<ViewContent> viewContent(
+        @RequestParam int title_id,
+        Authentication authentication
+    ){
+        Long userid =  (Long) authentication.getPrincipal();
+
+        return readservice.ViewSnippet(title_id, userid);
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<String> updateContent(
+        @RequestBody UpdateRequest request,
+        Authentication authentication
+    ){
+        Long userid = (Long) authentication.getPrincipal();
+
+        return service.updateSnippet(request, userid);
+    }
+
+    @DeleteMapping("/deleteImage")
+    public ResponseEntity<String> deleteImage(
+        @RequestParam int title_id,
+        @RequestParam int slot,
+        Authentication authentication
+    ){
+        Long userid = (Long) authentication.getPrincipal();
+        return service.deleteImage(title_id, slot, userid);
     }
 }

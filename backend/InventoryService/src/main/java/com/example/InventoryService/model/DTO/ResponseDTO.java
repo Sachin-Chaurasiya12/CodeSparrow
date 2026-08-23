@@ -11,6 +11,8 @@ public class ResponseDTO {
         this.title = title;
         this.id = id;
     }
+
+    public ResponseDTO(){}
     public String getContent() {
         return content;
     }

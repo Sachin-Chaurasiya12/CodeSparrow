@@ -2,35 +2,35 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useRef, useState, useCallback, useEffect } from "react";
 import { FILE_CONFIG } from "./fileTypeConfig";
 
+const API_BASE_URL = "http://localhost:8084";
 const REQUEST_TIMEOUT = 30000;
 
-function NewSnippetPage() {
+function ViewUpdateSnippetPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = !!id;
 
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const [title, setTitle] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [titleId, setTitleId] = useState(null);
-  const [loading, setLoading] = useState(isEditMode);
+  const [loading, setLoading] = useState(true);
   const [charCount, setCharCount] = useState(0);
+  const [initialTitle, setInitialTitle] = useState("");
+  const [initialContent, setInitialContent] = useState("");
 
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
 
-  // Fetch snippet data if editing
   useEffect(() => {
-    if (!isEditMode) return;
-
     const fetchSnippet = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch(`/inventory/snippet/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/inventory/View?title_id=${id}`, {
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           }
@@ -43,8 +43,39 @@ function NewSnippetPage() {
         const data = await response.json();
         setTitle(data.title);
         setContent(data.content);
-        setCharCount(data.content.length);
-        setTitleId(data.id);
+        setCharCount(data.content?.length || 0);
+        setTitleId(data.title_id ?? id);
+        setInitialTitle(data.title);
+        setInitialContent(data.content);
+
+        const loadedAttachments = [];
+        if (data.secureurl) {
+          loadedAttachments.push({
+            id: `image-1-${Date.now()}`,
+            name: data.publicid || "Image 1",
+            url: data.secureurl,
+            type: "image/jpeg",
+            isImage: true,
+            file: null,
+            slot: 1,
+            isExisting: true,
+            publicid: data.publicid,
+          });
+        }
+        if (data.secureurl2) {
+          loadedAttachments.push({
+            id: `image-2-${Date.now()}`,
+            name: data.publicid2 || "Image 2",
+            url: data.secureurl2,
+            type: "image/jpeg",
+            isImage: true,
+            file: null,
+            slot: 2,
+            isExisting: true,
+            publicid: data.publicid2,
+          });
+        }
+        setAttachments(loadedAttachments);
       } catch (err) {
         setError(err.message);
         setTimeout(() => navigate("/Inventory"), 2000);
@@ -54,7 +85,19 @@ function NewSnippetPage() {
     };
 
     fetchSnippet();
-  }, [id, isEditMode, navigate]);
+  }, [id, navigate]);
+
+  const hasChanges = () => {
+    return title !== initialTitle || content !== initialContent;
+  };
+
+  const handleBackClick = () => {
+    if (hasChanges()) {
+      setShowExitModal(true);
+    } else {
+      navigate("/Inventory");
+    }
+  };
 
   const gradientBtn = {
     background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
@@ -176,6 +219,8 @@ function NewSnippetPage() {
         size: file.size,
         isImage,
         file,
+        slot: null,
+        isExisting: false,
       });
     });
 
@@ -206,15 +251,44 @@ function NewSnippetPage() {
     e.target.value = "";
   };
 
-  const removeAttachment = (id) => {
+  const removeAttachment = async (attId) => {
+    const attachment = attachments.find((a) => a.id === attId);
+
+    if (!attachment) return;
+
+    // If existing image, delete from backend/Cloudinary
+    if (attachment.isExisting && attachment.slot) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(
+          `${API_BASE_URL}/inventory/deleteImage?title_id=${titleId}&slot=${attachment.slot}`,
+          {
+            method: "DELETE",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
+          }
+        );
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to delete image: ${response.status}`);
+        }
+      } catch (err) {
+        console.error("Error deleting image:", err);
+        setError(err.message || "Failed to delete image");
+        return;
+      }
+    }
+
     setAttachments((prev) => {
-      const target = prev.find((a) => a.id === id);
+      const target = prev.find((a) => a.id === attId);
 
       if (target) {
         URL.revokeObjectURL(target.url);
       }
 
-      return prev.filter((a) => a.id !== id);
+      return prev.filter((a) => a.id !== attId);
     });
   };
 
@@ -256,7 +330,7 @@ function NewSnippetPage() {
 
     const endpoint = slot === 0 ? "/inventory/uploadImage1" : "/inventory/uploadImage2";
 
-    const res = await fetch(endpoint, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -273,7 +347,7 @@ function NewSnippetPage() {
     return data;
   }, []);
 
-  const handleConfirmSave = useCallback(async () => {
+  const handleConfirmUpdate = useCallback(async () => {
     const snippetData = validateSnippet();
 
     if (!snippetData) {
@@ -296,16 +370,16 @@ function NewSnippetPage() {
         throw new Error("Please login again");
       }
 
-      const endpoint = isEditMode ? `/inventory/update/${titleId}` : "/inventory/createnew";
-      const method = isEditMode ? "PUT" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
+      const response = await fetch(`${API_BASE_URL}/inventory/update`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(snippetData),
+        body: JSON.stringify({
+          title_id: Number(titleId),
+          content: snippetData.content,
+        }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -313,36 +387,18 @@ function NewSnippetPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        
-        if (response.status === 409 || errorData.message?.toLowerCase().includes('already exist')) {
-          throw new Error("Title already exists. Please use a different title.");
-        }
-        
         throw new Error(
-          errorData.message || `Failed to save content: ${response.status}`
+          errorData.message || `Failed to update content: ${response.status}`
         );
       }
 
-      const responseData = await response.json();
-      const createdTitleId = responseData.title_id || titleId;
+      const newImageAttachments = attachments.filter((a) => a.isImage && a.file);
 
-      if (!createdTitleId) {
-        throw new Error("No title ID returned from server");
-      }
-
-      setTitleId(createdTitleId);
-
-      const imageAttachments = attachments.filter((a) => a.isImage && a.file);
-
-      for (let i = 0; i < imageAttachments.length && i < 2; i++) {
-        await uploadImage(imageAttachments[i].file, i, createdTitleId);
+      for (let i = 0; i < newImageAttachments.length && i < 2; i++) {
+        await uploadImage(newImageAttachments[i].file, i, titleId);
       }
 
       setShowSaveModal(false);
-      setTitle("");
-      setContent("");
-      setAttachments([]);
-      setTitleId(null);
       setError(null);
 
       navigate("/Inventory");
@@ -352,13 +408,13 @@ function NewSnippetPage() {
       if (err.name === "AbortError") {
         setError("Request timeout. Please try again.");
       } else {
-        console.error("Error saving content:", err);
-        setError(err.message || "Failed to save content. Please try again.");
+        console.error("Error updating content:", err);
+        setError(err.message || "Failed to update content. Please try again.");
       }
     } finally {
       setSaving(false);
     }
-  }, [validateSnippet, attachments, uploadImage, navigate, isEditMode, titleId]);
+  }, [validateSnippet, attachments, uploadImage, navigate, titleId]);
 
   if (loading) {
     return (
@@ -385,12 +441,7 @@ function NewSnippetPage() {
         boxSizing: "border-box",
       }}
     >
-      <div
-        style={{
-          maxWidth: "1500px",
-          margin: "0 auto",
-        }}
-      >
+      <div style={{ maxWidth: "1500px", margin: "0 auto" }}>
 
         {error && (
           <div
@@ -412,7 +463,6 @@ function NewSnippetPage() {
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               zIndex: 150,
               maxWidth: "320px",
-              animation: "slideIn 0.3s ease",
             }}
           >
             <span>{error}</span>
@@ -443,36 +493,15 @@ function NewSnippetPage() {
             marginBottom: "2rem",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-            }}
-          >
-            <i
-              className="bi bi-box-seam"
-              style={{
-                fontSize: "30px",
-                color: "#1a1a1a",
-              }}
-            />
-
-            <h1
-              style={{
-                fontSize: "26px",
-                fontWeight: "800",
-                letterSpacing: "-0.5px",
-                margin: 0,
-                color: "#1a1a1a",
-              }}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <i className="bi bi-box-seam" style={{ fontSize: "30px", color: "#1a1a1a" }} />
+            <h1 style={{ fontSize: "26px", fontWeight: "800", letterSpacing: "-0.5px", margin: 0, color: "#1a1a1a" }}>
               Inventory
             </h1>
           </div>
 
           <button
-            onClick={() => navigate("/Inventory")}
+            onClick={handleBackClick}
             aria-label="Back to inventory"
             style={{
               background: "transparent",
@@ -507,39 +536,14 @@ function NewSnippetPage() {
               gap: "20px",
             }}
           >
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <div
-                style={{
-                  width: "4px",
-                  height: "28px",
-                  backgroundColor: "#7B4FDB",
-                  borderRadius: "2px",
-                }}
-              />
-
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "22px",
-                  fontWeight: "800",
-                  color: "#1a1a1a",
-                }}
-              >
-                {isEditMode ? "Edit" : "Create New"}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "4px", height: "28px", backgroundColor: "#7B4FDB", borderRadius: "2px" }} />
+              <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#1a1a1a" }}>
+                View / Update
               </h2>
             </div>
 
-            <button
-              onClick={handleUploadClick}
-              style={gradientBtn}
-            >
+            <button onClick={handleUploadClick} style={gradientBtn}>
               <i className="bi bi-plus-lg" />
               Upload
             </button>
@@ -549,21 +553,32 @@ function NewSnippetPage() {
               type="file"
               multiple
               onChange={handleFileChange}
-              style={{
-                display: "none",
-              }}
+              style={{ display: "none" }}
             />
-
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "10px",
-              position: "relative"
-            }}
-          >
+          <div style={{ marginBottom: "1rem" }}>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: "10px",
+                border: "1px solid #d9d9d9",
+                outline: "none",
+                fontSize: "18px",
+                fontWeight: "700",
+                fontFamily: "'Inter', sans-serif",
+                boxSizing: "border-box",
+                color: "#1a1a1a",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", position: "relative" }}>
             <div
               style={{
                 width: "4px",
@@ -589,7 +604,7 @@ function NewSnippetPage() {
                 style={{
                   flex: 1,
                   width: "100%",
-                  minHeight: "620px",
+                  minHeight: "600px",
                   border: "none",
                   outline: "none",
                   resize: "none",
@@ -620,23 +635,12 @@ function NewSnippetPage() {
           </div>
 
           {attachments.length > 0 && (
-
-            <div
-              style={{
-                marginTop: "16px",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "12px",
-              }}
-            >
-
+            <div style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "12px" }}>
               {attachments.map((a) => (
-
                 <div
                   key={a.id}
                   style={{
-                    border:
-                      "1px solid #ededed",
+                    border: "1px solid #ededed",
                     borderRadius: "12px",
                     padding: "8px",
                     background: "#fafafa",
@@ -646,35 +650,20 @@ function NewSnippetPage() {
                     maxWidth: "260px",
                   }}
                 >
-
                   {a.isImage ? (
-
                     <img
                       src={a.url}
                       alt={a.name}
-                      onClick={() =>
-                        setPreviewImage(a)
-                      }
+                      onClick={() => setPreviewImage(a)}
                       style={{
                         width: "60px",
                         height: "60px",
                         objectFit: "cover",
                         borderRadius: "8px",
                         cursor: "pointer",
-                        transition: "transform 0.2s ease",
                       }}
-                      onMouseEnter={(e) =>
-                        e.target.style.transform =
-                          "scale(1.05)"
-                      }
-                      onMouseLeave={(e) =>
-                        e.target.style.transform =
-                          "scale(1)"
-                      }
                     />
-
                   ) : (
-
                     <div
                       style={{
                         width: "60px",
@@ -688,45 +677,28 @@ function NewSnippetPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <i
-                        className="bi bi-file-earmark"
-                        style={{
-                          fontSize: "24px",
-                        }}
-                      />
+                      <i className="bi bi-file-earmark" style={{ fontSize: "24px" }} />
                     </div>
-
                   )}
 
-                  <div
-                    style={{
-                      minWidth: 0,
-                      flex: 1,
-                    }}
-                  >
-
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <div
                       style={{
                         fontSize: "13px",
                         fontWeight: "600",
                         color: "#1a1a1a",
                         overflow: "hidden",
-                        textOverflow:
-                          "ellipsis",
-                        whiteSpace:
-                          "nowrap",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {a.name}
                     </div>
 
                     <button
-                      onClick={() =>
-                        removeAttachment(a.id)
-                      }
+                      onClick={() => removeAttachment(a.id)}
                       style={{
-                        background:
-                          "transparent",
+                        background: "transparent",
                         border: "none",
                         color: "#ef4444",
                         fontSize: "12px",
@@ -737,29 +709,15 @@ function NewSnippetPage() {
                     >
                       Remove
                     </button>
-
                   </div>
-
                 </div>
-
               ))}
-
             </div>
-
           )}
 
-          <div
-            style={{
-              marginTop: "24px",
-              display: "flex",
-              justifyContent: "flex-end",
-            }}
-          >
-
+          <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
             <button
-              onClick={() =>
-                setShowSaveModal(true)
-              }
+              onClick={() => setShowSaveModal(true)}
               disabled={saving}
               style={{
                 ...gradientBtn,
@@ -772,155 +730,172 @@ function NewSnippetPage() {
             >
               {saving ? "Saving..." : "Save"}
             </button>
-
           </div>
-
         </div>
-
       </div>
 
-      {showSaveModal && !isEditMode && (
-
+      {showExitModal && (
         <div
           role="dialog"
           aria-modal="true"
-          onClick={() =>
-            setShowSaveModal(false)
-          }
+          onClick={() => setShowExitModal(false)}
           style={{
             position: "fixed",
             inset: 0,
-            background:
-              "rgba(15, 15, 25, 0.45)",
+            background: "rgba(15, 15, 25, 0.6)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 50,
             padding: "16px",
+            animation: "fadeIn 0.3s ease-out",
           }}
         >
-
           <div
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white",
-              borderRadius: "16px",
-              padding: "28px",
+              background: "linear-gradient(135deg, #ffffff 0%, #f8f6ff 100%)",
+              borderRadius: "20px",
+              padding: "32px 28px",
               width: "100%",
               maxWidth: "420px",
-              boxShadow:
-                "0 20px 40px rgba(0,0,0,0.2)",
-              fontFamily:
-                "'Inter', sans-serif",
+              boxShadow: "0 25px 50px rgba(123, 79, 219, 0.25), 0 0 1px rgba(123, 79, 219, 0.5)",
+              border: "1px solid rgba(123, 79, 219, 0.15)",
+              fontFamily: "'Inter', sans-serif",
               boxSizing: "border-box",
+              textAlign: "center",
+              animation: "slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
           >
+            <div style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              animation: "scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
+              <i className="bi bi-exclamation-triangle" style={{ fontSize: "28px", color: "white" }} />
+            </div>
 
-            <h3
-              style={{
-                margin: "0 0 8px",
-                fontSize: "20px",
-                fontWeight: "800",
-                color: "#1a1a1a",
-              }}
-            >
-              Save Snippet
+            <h3 style={{ 
+              margin: "0 0 6px", 
+              fontSize: "22px", 
+              fontWeight: "800", 
+              color: "#1a1a1a",
+              letterSpacing: "-0.3px",
+            }}>
+              Unsaved Changes
             </h3>
 
-            <p
-              style={{
-                margin: "0 0 16px",
-                color: "#666",
-                fontSize: "14px",
-              }}
-            >
-              Enter a title for your snippet.
+            <p style={{ 
+              margin: "0 0 24px", 
+              color: "#666", 
+              fontSize: "15px",
+              lineHeight: "1.5",
+            }}>
+              You have unsaved changes. Would you like to save them before leaving?
             </p>
 
-            <input
-              autoFocus
-              type="text"
-              value={title}
-              onChange={(e) =>
-                setTitle(e.target.value)
-              }
-              placeholder="Snippet title"
-              onKeyDown={(e) =>
-                e.key === "Enter" &&
-                handleConfirmSave()
-              }
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: "30px",
-                border:
-                  "1px solid #d9d9d9",
-                outline: "none",
-                fontSize: "15px",
-                fontFamily:
-                  "'Inter', sans-serif",
-                marginBottom: "20px",
-                boxSizing: "border-box",
-              }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                justifyContent: "flex-end",
-              }}
-            >
-
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button
                 onClick={() => {
-                  setShowSaveModal(false);
-                  setTitle("");
+                  setShowExitModal(false);
+                  navigate("/Inventory");
                 }}
                 style={{
-                  padding: "10px 22px",
+                  padding: "11px 24px",
                   borderRadius: "30px",
-                  border:
-                    "2px solid #1a1a1a",
+                  border: "1.5px solid #d9d9d9",
                   background: "white",
                   color: "#1a1a1a",
                   fontWeight: "700",
                   cursor: "pointer",
-                  fontFamily:
-                    "'Inter', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "15px",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "#f8f6ff";
+                  e.target.style.borderColor = "#7B4FDB";
+                  e.target.style.boxShadow = "0 4px 12px rgba(123, 79, 219, 0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "white";
+                  e.target.style.borderColor = "#d9d9d9";
+                  e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
                 }}
               >
-                Cancel
+                Discard
               </button>
 
               <button
-                onClick={handleConfirmSave}
-                disabled={!title.trim() || saving}
+                onClick={() => {
+                  setShowExitModal(false);
+                  setShowSaveModal(true);
+                }}
                 style={{
-                  ...gradientBtn,
-                  padding: "10px 26px",
-                  opacity:
-                    (title.trim() && !saving) ? 1 : 0.6,
-                  cursor:
-                    (title.trim() && !saving)
-                      ? "pointer"
-                      : "not-allowed",
+                  background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "11px 28px",
+                  borderRadius: "30px",
+                  fontSize: "15px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: "0 8px 20px rgba(123, 79, 219, 0.35)",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = "translateY(-2px)";
+                  e.target.style.boxShadow = "0 12px 28px rgba(123, 79, 219, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = "translateY(0)";
+                  e.target.style.boxShadow = "0 8px 20px rgba(123, 79, 219, 0.35)";
                 }}
               >
-                {saving ? "Saving..." : "Save"}
+                Save Changes
               </button>
-
             </div>
-
           </div>
 
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            @keyframes scaleIn {
+              from {
+                opacity: 0;
+                transform: scale(0.8);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+          `}</style>
         </div>
-
       )}
 
-      {isEditMode && showSaveModal && (
+      {showSaveModal && (
         <div
           role="dialog"
           aria-modal="true"
@@ -928,102 +903,186 @@ function NewSnippetPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 15, 25, 0.45)",
+            background: "rgba(15, 15, 25, 0.6)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 50,
             padding: "16px",
+            animation: "fadeIn 0.3s ease-out",
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white",
-              borderRadius: "16px",
-              padding: "28px",
+              background: "linear-gradient(135deg, #ffffff 0%, #f8f6ff 100%)",
+              borderRadius: "20px",
+              padding: "32px 28px",
               width: "100%",
               maxWidth: "420px",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+              boxShadow: "0 25px 50px rgba(123, 79, 219, 0.25), 0 0 1px rgba(123, 79, 219, 0.5)",
+              border: "1px solid rgba(123, 79, 219, 0.15)",
               fontFamily: "'Inter', sans-serif",
               boxSizing: "border-box",
               textAlign: "center",
+              animation: "slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
           >
-            <h3
-              style={{
-                margin: "0 0 8px",
-                fontSize: "20px",
-                fontWeight: "800",
-                color: "#1a1a1a",
-              }}
-            >
-              Confirm Update
+            <div style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #7B4FDB 0%, #5B6EE8 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              animation: "scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
+              <i className="bi bi-pencil-square" style={{ fontSize: "28px", color: "white" }} />
+            </div>
+
+            <h3 style={{ 
+              margin: "0 0 6px", 
+              fontSize: "22px", 
+              fontWeight: "800", 
+              color: "#1a1a1a",
+              letterSpacing: "-0.3px",
+            }}>
+              Confirm Save
             </h3>
 
-            <p
-              style={{
-                margin: "0 0 20px",
-                color: "#666",
-                fontSize: "14px",
-              }}
-            >
-              Update "{title}"?
+            <p style={{ 
+              margin: "0 0 24px", 
+              color: "#666", 
+              fontSize: "15px",
+              lineHeight: "1.5",
+            }}>
+              Update <span style={{ fontWeight: "700", color: "#7B4FDB" }}>"{title}"</span>?
             </p>
 
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                justifyContent: "flex-end",
-              }}
-            >
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button
                 onClick={() => setShowSaveModal(false)}
                 style={{
-                  padding: "10px 22px",
+                  padding: "11px 24px",
                   borderRadius: "30px",
-                  border: "2px solid #1a1a1a",
+                  border: "1.5px solid #d9d9d9",
                   background: "white",
                   color: "#1a1a1a",
                   fontWeight: "700",
                   cursor: "pointer",
                   fontFamily: "'Inter', sans-serif",
+                  fontSize: "15px",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "#f8f6ff";
+                  e.target.style.borderColor = "#7B4FDB";
+                  e.target.style.boxShadow = "0 4px 12px rgba(123, 79, 219, 0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "white";
+                  e.target.style.borderColor = "#d9d9d9";
+                  e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
                 }}
               >
-                Cancel
+                Discard
               </button>
 
               <button
-                onClick={handleConfirmSave}
+                onClick={handleConfirmUpdate}
                 disabled={saving}
                 style={{
-                  ...gradientBtn,
-                  padding: "10px 26px",
-                  opacity: saving ? 0.6 : 1,
+                  background: "linear-gradient(90deg, #5B6EE8 0%, #7B4FDB 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "11px 28px",
+                  borderRadius: "30px",
+                  fontSize: "15px",
+                  fontWeight: "800",
                   cursor: saving ? "not-allowed" : "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  opacity: saving ? 0.7 : 1,
+                  boxShadow: "0 8px 20px rgba(123, 79, 219, 0.35)",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving) {
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 12px 28px rgba(123, 79, 219, 0.45)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 8px 20px rgba(123, 79, 219, 0.35)";
+                  }
                 }}
               >
-                {saving ? "Updating..." : "Update"}
+                {saving ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                    <span style={{
+                      width: "14px",
+                      height: "14px",
+                      borderRadius: "50%",
+                      border: "2px solid rgba(255,255,255,0.4)",
+                      borderTop: "2px solid white",
+                      animation: "spin 0.8s linear infinite"
+                    }} />
+                    Saving...
+                  </span>
+                ) : (
+                  "Save"
+                )}
               </button>
             </div>
           </div>
+
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            @keyframes scaleIn {
+              from {
+                opacity: 0;
+                transform: scale(0.8);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       )}
 
       {previewImage && (
-
         <div
           role="dialog"
           aria-modal="true"
-          onClick={() =>
-            setPreviewImage(null)
-          }
+          onClick={() => setPreviewImage(null)}
           style={{
             position: "fixed",
             inset: 0,
-            background:
-              "rgba(15, 15, 25, 0.8)",
+            background: "rgba(15, 15, 25, 0.8)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1031,11 +1090,8 @@ function NewSnippetPage() {
             padding: "16px",
           }}
         >
-
           <div
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
             style={{
               position: "relative",
               display: "inline-block",
@@ -1043,35 +1099,24 @@ function NewSnippetPage() {
               maxHeight: "90vh",
               borderRadius: "12px",
               overflow: "hidden",
-              boxShadow:
-                "0 25px 50px rgba(0,0,0,0.3)",
+              boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
               lineHeight: 0,
             }}
           >
-
             <img
               src={previewImage.url}
               alt={previewImage.name}
-              style={{
-                maxWidth: "90vw",
-                maxHeight: "90vh",
-                width: "auto",
-                height: "auto",
-                display: "block",
-              }}
+              style={{ maxWidth: "90vw", maxHeight: "90vh", width: "auto", height: "auto", display: "block" }}
             />
 
             <button
-              onClick={() =>
-                setPreviewImage(null)
-              }
+              onClick={() => setPreviewImage(null)}
               aria-label="Close preview"
               style={{
                 position: "absolute",
                 top: "16px",
                 right: "16px",
-                background:
-                  "rgba(0,0,0,0.6)",
+                background: "rgba(0,0,0,0.6)",
                 border: "none",
                 color: "white",
                 width: "40px",
@@ -1082,41 +1127,15 @@ function NewSnippetPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: "20px",
-                transition:
-                  "background 0.2s ease",
               }}
-              onMouseEnter={(e) =>
-                e.target.style.background =
-                  "rgba(0,0,0,0.8)"
-              }
-              onMouseLeave={(e) =>
-                e.target.style.background =
-                  "rgba(0,0,0,0.6)"
-              }
             >
               <i className="bi bi-x-lg" />
             </button>
-
           </div>
-
         </div>
-
       )}
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }
 
-export default NewSnippetPage;
+export default ViewUpdateSnippetPage;
