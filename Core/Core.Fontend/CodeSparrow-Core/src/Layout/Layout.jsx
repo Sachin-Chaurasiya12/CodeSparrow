@@ -31,7 +31,7 @@ export default function LayoutShell() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8081/api/auth/logout", {
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -50,7 +50,7 @@ export default function LayoutShell() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch("http://localhost:8083/profile", {
+        const response = await fetch("/profile", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -80,7 +80,7 @@ export default function LayoutShell() {
     const fetchMenus = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch("http://localhost:8082/layout/menu", {
+        const response = await fetch("/layout/menu", {
           method: "GET",
           credentials: "include",
           headers: {

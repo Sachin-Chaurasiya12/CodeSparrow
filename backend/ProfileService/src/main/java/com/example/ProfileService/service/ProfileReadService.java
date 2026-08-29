@@ -1,13 +1,21 @@
 package com.example.ProfileService.service;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.example.ProfileService.Exception.ProfileNotFoundException;
 import com.example.ProfileService.model.Profile;
 import com.example.ProfileService.model.Dto.ProfileResponsedto;
 import com.example.ProfileService.repository.ProfileRepository;
 import com.example.ProfileService.service.Interface.IProfileReadService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class ProfileReadService implements IProfileReadService{
@@ -31,11 +39,31 @@ public class ProfileReadService implements IProfileReadService{
 
     }
 
-    private long getSnippetCount(){
-        String url = "http://inventory-service/inventory/vaultcount";
+    private long getSnippetCount() {
 
-        return restTemplate.getForObject(url,Long.class);
-    }
+    String url = "http://inventory-service/inventory/vaultcount";
+
+    HttpServletRequest request =
+            ((ServletRequestAttributes) RequestContextHolder
+                    .currentRequestAttributes())
+                    .getRequest();
+
+    String authHeader = request.getHeader("Authorization");
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", authHeader);
+
+    HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+    ResponseEntity<Long> response = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            entity,
+            Long.class
+    );
+
+    return response.getBody();
+}
 
     private ProfileResponsedto mapToResponse(Profile profile) {
 

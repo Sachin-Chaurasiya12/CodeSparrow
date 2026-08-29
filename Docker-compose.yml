@@ -9,6 +9,7 @@ volumes:
   dashboard-target:
   profile-target:
   inventory-target:
+  connect-target:
   mysql_data:
 
 services:
@@ -175,6 +176,42 @@ services:
 
     networks:
       - codesparrow-net
+      
+  connect-service:
+    build:
+      context: ./backend/ConnectService
+      dockerfile: Dockerfile
+
+    container_name: connect-service
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8085
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+
+    ports:
+      - "8085:8085"
+
+    volumes:
+      - ./backend/ConnectService:/app
+      - connect-target:/app/target
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    depends_on:
+      - mysql
+
+    networks:
+      - codesparrow-net
 
   service-registry:
     build:
@@ -233,6 +270,7 @@ services:
       - dashboard-service
       - profile-service
       - inventory-service
+      - connect-service
 
     networks:
       - codesparrow-net

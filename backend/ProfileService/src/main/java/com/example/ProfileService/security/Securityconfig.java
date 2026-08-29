@@ -24,6 +24,7 @@ public class Securityconfig {
             .cors(Customizer.withDefaults()) 
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.POST, "/profile").permitAll()
                 .requestMatchers(
                         "/api/auth/**",
                         "/v3/api-docs/**",

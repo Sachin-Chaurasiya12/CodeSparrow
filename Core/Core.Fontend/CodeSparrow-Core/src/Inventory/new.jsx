@@ -296,7 +296,7 @@ function NewSnippetPage() {
         throw new Error("Please login again");
       }
 
-      const endpoint = isEditMode ? `/inventory/update/${titleId}` : "/inventory/createnew";
+      const endpoint = isEditMode ? "/inventory/update/" : "/inventory/createnew";
       const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(endpoint, {

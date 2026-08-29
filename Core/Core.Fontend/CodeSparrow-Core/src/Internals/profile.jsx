@@ -16,39 +16,35 @@ const GLOBAL_STYLES = `
   }
 
   .top-username {
-    margin-bottom: 3px;
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    max-width: 100%;
-
-    width: 0;
-    animation: expandUsername 1s ease forwards;
-
-   font-family: "Clash Display", sans-serif;
-     font-size: 30px;
-    font-weight: 700;
-
-    color: white;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-
-    padding: 8px 18px;
-    border-radius: 50px;
+      margin-bottom: 3px;
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: auto;
+      max-width: 0;
+      animation: expandUsername 0.6s ease forwards;
+  
+      font-family: "Clash Display", sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+  
+      color: white;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+  
+      padding: 8px 18px;
+      border-radius: 50px;
   }
-
+  
   @keyframes expandUsername {
-    from {
-      width: 0;
-      opacity: 0;
-    }
-    to {
-      width: 200px;
-      opacity: 1;
-    }
-  }
-  .page-container {
-    min-height: 100vh;
-    padding: 40px 20px;
+      from {
+        max-width: 0;
+        opacity: 0;
+      }
+      to {
+        max-width: 100%;
+        opacity: 1;
+      }
   }
 
   .header-banner {
@@ -703,7 +699,7 @@ export default function ProfileApp() {
 
       const token = localStorage.getItem("accessToken");
 
-      const response = await fetch("http://localhost:8083/profile", {
+      const response = await fetch("/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -744,7 +740,7 @@ export default function ProfileApp() {
       }
       const token = localStorage.getItem("accessToken");
 
-      const response = await fetch("http://localhost:8083/profile/update", {
+      const response = await fetch("/profile/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -808,7 +804,7 @@ export default function ProfileApp() {
     }
 
     const response = await fetch(
-      "http://localhost:8083/profile/upload",
+      "/profile/upload",
       {
         method: "POST",
         headers: {
@@ -867,7 +863,7 @@ export default function ProfileApp() {
     }
 
     const response = await fetch(
-      "http://localhost:8083/profile/uploadBanner",
+      "/profile/uploadBanner",
       {
         method: "POST",
         headers: {

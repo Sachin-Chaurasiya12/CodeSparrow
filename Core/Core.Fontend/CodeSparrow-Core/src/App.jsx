@@ -9,7 +9,7 @@
   import InventoryPage from "./Inventory/InventoryPage";
   import NewSnippetPage from "./Inventory/new";
   import ViewUpdateSnippetPage from "./Inventory/ViewUpdateSnippetPage";
-
+  import ConnectRouter from "./Connect/Connectrouter";
   
   function PublicRoute({ children }) {
   const token = localStorage.getItem("accessToken");
@@ -38,6 +38,7 @@
         <Route path="/Inventory" element={<InventoryPage />} />
         <Route path="/new" element={<NewSnippetPage />} />
         <Route path="/view/:id" element={<ViewUpdateSnippetPage />} />
+        <Route path="/connect/community" element={<ConnectRouter />}/>
         {/* <Route 
           path="/internal/profilesetting"
           element={

@@ -30,7 +30,7 @@ function ViewUpdateSnippetPage() {
     const fetchSnippet = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch(`${API_BASE_URL}/inventory/View?title_id=${id}`, {
+        const response = await fetch(`/inventory/View?title_id=${id}`, {
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           }
@@ -261,7 +261,7 @@ function ViewUpdateSnippetPage() {
       try {
         const token = localStorage.getItem("accessToken");
         const response = await fetch(
-          `${API_BASE_URL}/inventory/deleteImage?title_id=${titleId}&slot=${attachment.slot}`,
+          `/inventory/deleteImage?title_id=${titleId}&slot=${attachment.slot}`,
           {
             method: "DELETE",
             headers: {
@@ -330,7 +330,7 @@ function ViewUpdateSnippetPage() {
 
     const endpoint = slot === 0 ? "/inventory/uploadImage1" : "/inventory/uploadImage2";
 
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${endpoint}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -370,16 +370,17 @@ function ViewUpdateSnippetPage() {
         throw new Error("Please login again");
       }
 
-      const response = await fetch(`${API_BASE_URL}/inventory/update`, {
+      const response = await fetch("/inventory/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          title_id: Number(titleId),
-          content: snippetData.content,
-        }),
+             title_id: Number(titleId),
+             title: snippetData.title,
+             content: snippetData.content,
+         }),
         signal: abortControllerRef.current.signal,
       });
 

@@ -28,8 +28,8 @@ public class ReadInventoryService implements IReadInventoryService{
         this.irepo = irepo;
     }
     @Override
-    public Page<SnippetResponse> getFilteredSnippets(String searchTerm, Pageable pageable) {
-        TitleSpecification spec = new TitleSpecification(searchTerm);
+    public Page<SnippetResponse> getFilteredSnippets(String searchTerm, Long userid,Pageable pageable) {
+        TitleSpecification spec = new TitleSpecification(searchTerm, userid);
         return repo.findAll(spec, pageable)
                 .map(title -> new SnippetResponse(
                     title.getId(),
@@ -37,8 +37,8 @@ public class ReadInventoryService implements IReadInventoryService{
                 ));
     }
     @Override
-    public long getSnippetsCount() {
-        long count = repo.countByIsActiveTrue();
+    public long getSnippetsCountByUserid(Long userid) {
+        long count = repo.countByIsActiveTrueAndUserid(userid);
         return count;
     }
     @Override

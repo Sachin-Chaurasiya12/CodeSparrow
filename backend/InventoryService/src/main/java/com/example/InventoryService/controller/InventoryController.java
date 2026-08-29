@@ -88,15 +88,19 @@ public class InventoryController {
         @RequestParam(required = false) String searchTerm,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "15") int size,
-        @RequestParam(defaultValue = "title") String sortBy
+        @RequestParam(defaultValue = "title") String sortBy,
+        Authentication authentication
     ){
+        Long userid = (Long)authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
-        return readservice.getFilteredSnippets(searchTerm, pageable);
+        return readservice.getFilteredSnippets(searchTerm, userid,pageable);
     }
 
     @GetMapping("/vaultcount")
-    public long getCount(){
-        return readservice.getSnippetsCount();
+    public long getCount(Authentication authentication){
+
+        Long userid = (Long)authentication.getPrincipal();
+        return readservice.getSnippetsCountByUserid(userid);
     }
 
     @DeleteMapping("/deletesnippet")

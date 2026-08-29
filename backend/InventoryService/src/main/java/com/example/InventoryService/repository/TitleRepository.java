@@ -20,7 +20,7 @@ public interface TitleRepository extends JpaRepository<titles, Integer>, JpaSpec
     Boolean existsByUserid(Long userid);
     boolean existsByUseridAndTitle(Long userid, String title);
 
-    Long countByIsActiveTrue();
+    Long countByIsActiveTrueAndUserid(Long userid);
     @Override
     @QueryHints(@QueryHint(name = "org.hibernate.fetchSize", value = "15"))
     Page<titles> findAll(Specification<titles> spec, Pageable pageable);

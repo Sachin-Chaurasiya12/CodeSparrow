@@ -85,7 +85,7 @@ export default function InventoryPage() {
         }
 
         const token = localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE_URL}/inventory/snippets?${params.toString()}`, {
+        const response = await fetch(`/inventory/snippets?${params.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})

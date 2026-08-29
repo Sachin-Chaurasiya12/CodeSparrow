@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
     const refreshAccessToken = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8081/api/auth/refresh",
+          "/api/auth/refresh",
           {
             method: "POST",
             credentials: "include", 
