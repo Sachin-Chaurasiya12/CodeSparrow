@@ -29,12 +29,7 @@ protected void doFilterInternal(HttpServletRequest request,
                                 FilterChain filterChain)
         throws ServletException, IOException {
 
-    System.out.println("========== JWT FILTER ==========");
-    System.out.println(request.getRequestURI());
-
     String authHeader = request.getHeader("Authorization");
-
-    System.out.println("Authorization Header = " + authHeader);
 
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
         System.out.println("No Bearer Token");
@@ -45,18 +40,11 @@ protected void doFilterInternal(HttpServletRequest request,
     String token = authHeader.substring(7);
 
     try {
-
-        System.out.println("Token = " + token);
-
         boolean valid = jwtService.validateToken(token);
-
-        System.out.println("Token valid = " + valid);
 
         if(valid){
 
             Long userId = jwtService.extractUserId(token);
-
-            System.out.println("UserId = " + userId);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
@@ -66,8 +54,6 @@ protected void doFilterInternal(HttpServletRequest request,
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            System.out.println("Authentication set");
         }
 
     } catch(Exception e){
