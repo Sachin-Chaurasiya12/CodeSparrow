@@ -113,11 +113,6 @@ Database (MySQL)
 * Docker
 * Docker Compose
 
-### Deployment
-
-* Frontend: Vercel
-* Backend: Render
-* Database: Supabase
 
 ---
 
