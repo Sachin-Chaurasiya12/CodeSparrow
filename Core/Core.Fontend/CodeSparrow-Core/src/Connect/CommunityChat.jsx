@@ -1,15 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Globe2, Users, User, Search, Send, ShieldCheck } from "lucide-react";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 import "./Community.css";
 
 const ACCENT = "#6C5CE7";
-
-const initialMessages = [
-  { id: 1, sender: "other", username: "username", time: "23:00", text: "This is a client message the message will come here and look like this" },
-  { id: 2, sender: "other", username: "username", time: "23:00", text: "The message will be hardcoded for sometime" },
-  { id: 3, sender: "me", time: "23:00", text: "This is your message , you will get" },
-  { id: 4, sender: "me", time: "23:00", text: "it on this side" },
-];
+const API_BASE = "/Community/messages";
+const WS_URL = "/ws";
 
 const communityRules = [
   "Be respectful. No harassment, hate speech, or personal attacks.",
@@ -21,18 +18,90 @@ const communityRules = [
   "Violation of these rules may result in a temporary or permanent ban.",
 ];
 
+const formatTime = (createdAt) => {
+  if (!createdAt) return "";
+  const d = new Date(createdAt);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+// Decode userId from the JWT payload, same token source ProfileApp uses
+const getCurrentUserId = () => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    const payload = JSON.parse(atob(token.split(".")[1]));
+
+    const id =
+      payload.userId ??
+      payload.id ??
+      payload.sub ??
+      null;
+
+    return id != null ? Number(id) : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function CommunityChat({ onOpenConnections, onOpenSearch }) {
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const stompClientRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const currentUserId = getCurrentUserId();
+
+  useEffect(() => {
+    if (!hasJoined) return;
+
+    const token = localStorage.getItem("accessToken");
+
+    fetch(API_BASE, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => setMessages(Array.isArray(data) ? data : []))
+      .catch(() => setMessages([]));
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(WS_URL),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe("/topic/community", (msg) => {
+        const body = JSON.parse(msg.body);
+              
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === body.id)) {
+            return prev;
+          }
+        
+          return [...prev, body];
+        });
+      });
+      },  
+    });
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      client.deactivate();
+    };
+  }, [hasJoined]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = () => {
-    if (!draft.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), sender: "me", time: "23:00", text: draft.trim() },
-    ]);
+    if (!draft.trim() || !stompClientRef.current?.connected) return;
+    stompClientRef.current.publish({
+      destination: "/app/community.send",
+      body: JSON.stringify({ content: draft.trim(), replyToMessageId: null }),
+    });
     setDraft("");
   };
 
@@ -97,24 +166,28 @@ export default function CommunityChat({ onOpenConnections, onOpenSearch }) {
           ) : (
             <>
               <div className="messages-list">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`message-row ${m.sender === "me" ? "message-row-me" : "message-row-other"}`}
-                  >
-                    {m.sender === "other" && (
-                      <span className="message-meta" style={{ color: ACCENT }}>
-                        {m.time} | {m.username}
-                      </span>
-                    )}
+                {messages.map((m, idx) => {
+                  const isMe = m.senderUserId === currentUserId;
+                  return (
                     <div
-                      className={`message-bubble ${m.sender === "me" ? "message-bubble-me" : "message-bubble-other"}`}
-                      style={m.sender === "me" ? { backgroundColor: "#D9D3FA" } : undefined}
+                      key={m.id ?? idx}
+                      className={`message-row ${isMe ? "message-row-me" : "message-row-other"}`}
                     >
-                      {m.text}
+                      {!isMe && (
+                        <span className="message-meta" style={{ color: ACCENT }}>
+                          {formatTime(m.createdAt)} | User {m.senderUserId}
+                        </span>
+                      )}
+                      <div
+                        className={`message-bubble ${isMe ? "message-bubble-me" : "message-bubble-other"}`}
+                        style={isMe ? { backgroundColor: "#D9D3FA" } : undefined}
+                      >
+                        {m.content}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                <div ref={messagesEndRef} />
               </div>
 
               <div className="composer">
